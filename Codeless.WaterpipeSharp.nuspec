@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>Codeless.WaterpipeSharp</id>
+        <version>1.0.0-beta</version>
+        <authors>misonou</authors>
+        <projectUrl>https://github.com/misonou/codeless-waterpipe</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Dynamic data evaluation and template rendering.</description>
+        <copyright>MIT</copyright>
+        <language>en-US</language>
+        <dependencies>
+            <dependency id="Codeless.Ecma" version="0.1.0-alpha" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="lib\net45\Codeless.WaterpipeSharp.dll" target="lib\net45\Codeless.WaterpipeSharp.dll" />
+        <file src="lib\net45\Codeless.WaterpipeSharp.xml" target="lib\net45\Codeless.WaterpipeSharp.xml" />
+        <file src="lib\net40\Codeless.WaterpipeSharp.dll" target="lib\net40\Codeless.WaterpipeSharp.dll" />
+        <file src="lib\net40\Codeless.WaterpipeSharp.xml" target="lib\net40\Codeless.WaterpipeSharp.xml" />
+        <file src="lib\net35\Codeless.WaterpipeSharp.dll" target="lib\net35\Codeless.WaterpipeSharp.dll" />
+        <file src="lib\net35\Codeless.WaterpipeSharp.xml" target="lib\net35\Codeless.WaterpipeSharp.xml" />
+    </files>
+</package>

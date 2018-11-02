@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug-Net45</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{27084E4C-9AD8-446C-80E2-CD4221C112D5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Codeless.WaterpipeSharp</RootNamespace>
+    <AssemblyName>Codeless.WaterpipeSharp</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-Net35|AnyCPU'">
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\net35\</OutputPath>
+    <DocumentationFile>..\bin\net35\Codeless.WaterpipeSharp.xml</DocumentationFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-Net40|AnyCPU'">
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\net40\</OutputPath>
+    <DocumentationFile>..\bin\net40\Codeless.WaterpipeSharp.xml</DocumentationFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-Net45|AnyCPU'">
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\net45\</OutputPath>
+    <DocumentationFile>..\bin\net45\Codeless.WaterpipeSharp.xml</DocumentationFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Net35|AnyCPU'">
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\bin\net35\</OutputPath>
+    <DocumentationFile>..\bin\net35\Codeless.WaterpipeSharp.xml</DocumentationFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Net40|AnyCPU'">
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\bin\net40\</OutputPath>
+    <DocumentationFile>..\bin\net40\Codeless.WaterpipeSharp.xml</DocumentationFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Net45|AnyCPU'">
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\bin\net45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>..\bin\net45\Codeless.WaterpipeSharp.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Net35|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release-Net35|AnyCPU'">
+    <Reference Include="System.Threading, Version=1.0.2856.102, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.dll.1.0.2856.0\lib\net35\System.Threading.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Codeless.Ecma, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6e028f30b8da22f9, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Codeless.Ecma\src\bin\net35\Codeless.Ecma.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Net40|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release-Net40|AnyCPU'">
+    <Reference Include="Codeless.Ecma, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6e028f30b8da22f9, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Codeless.Ecma\src\bin\net40\Codeless.Ecma.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Net45|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release-Net45|AnyCPU'">
+    <Reference Include="Codeless.Ecma, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6e028f30b8da22f9, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Codeless.Ecma\src\bin\net45\Codeless.Ecma.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="EvaluateOptions.cs" />
+    <Compile Include="Internal\BuiltInPipeFunction.cs" />
+    <Compile Include="Internal\EvaluationContext.cs" />
+    <Compile Include="Internal\EvaluationStack.cs" />
+    <Compile Include="Internal\Guard.cs" />
+    <Compile Include="Internal\ObjectPath.cs" />
+    <Compile Include="Internal\Pipe.cs" />
+    <Compile Include="Internal\PipeArgument.cs" />
+    <Compile Include="Internal\StdIO.cs" />
+    <Compile Include="Internal\Token.cs" />
+    <Compile Include="Internal\TokenList.cs" />
+    <Compile Include="PipeContext.cs" />
+    <Compile Include="PipeFunction.cs" />
+    <Compile Include="PipeGlobal.cs" />
+    <Compile Include="PipeLambda.cs" />
+    <Compile Include="PipeLambdaFactory.cs" />
+    <Compile Include="PipeValueComparer.cs" />
+    <Compile Include="PipeValueExtension.cs" />
+    <Compile Include="PipeValueObjectBuilder.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Waterpipe.cs" />
+    <Compile Include="WaterpipeException.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="key.snk" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  -->
+  <Target Name="AfterBuild" Condition="'$(Configuration)|$(Platform)' == 'Release-Net35|AnyCPU'">
+    <Copy SourceFiles="..\bin\net35\Codeless.WaterpipeSharp.dll" DestinationFolder="..\..\lib\net35" ContinueOnError="false" />
+    <Copy SourceFiles="..\bin\net35\Codeless.WaterpipeSharp.xml" DestinationFolder="..\..\lib\net35" ContinueOnError="false" />
+  </Target>
+  <Target Name="AfterBuild" Condition="'$(Configuration)|$(Platform)' == 'Release-Net40|AnyCPU'">
+    <Copy SourceFiles="..\bin\net40\Codeless.WaterpipeSharp.dll" DestinationFolder="..\..\lib\net40" ContinueOnError="false" />
+    <Copy SourceFiles="..\bin\net40\Codeless.WaterpipeSharp.xml" DestinationFolder="..\..\lib\net40" ContinueOnError="false" />
+  </Target>
+  <Target Name="AfterBuild" Condition="'$(Configuration)|$(Platform)' == 'Release-Net45|AnyCPU'">
+    <Copy SourceFiles="..\bin\net45\Codeless.WaterpipeSharp.dll" DestinationFolder="..\..\lib\net45" ContinueOnError="false" />
+    <Copy SourceFiles="..\bin\net45\Codeless.WaterpipeSharp.xml" DestinationFolder="..\..\lib\net45" ContinueOnError="false" />
+  </Target>
+</Project>

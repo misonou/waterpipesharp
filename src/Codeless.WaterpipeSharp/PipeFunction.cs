@@ -13,69 +13,9 @@ namespace Codeless.WaterpipeSharp {
   /// An abstract class representing a pipe function that can be invoked with a given pipe context.
   /// </summary>
   public abstract class PipeFunction {
-    /// <summary>
-    /// Encapsulates a native method that takes arbitrary number of arguments or function arguments from pipe.
-    /// </summary>
-    /// <param name="context">Pipe context.</param>
-    /// <returns>Result of the pipe function.</returns>
-    public delegate EcmaValue Variadic(PipeContext context);
+    public abstract bool IsVariadic { get; }
 
-    /// <summary>
-    /// Encapsulates a native method that takes no arguments from pipe.
-    /// </summary>
-    /// <param name="value">Piped value from object path or previous pipe function.</param>
-    /// <returns>Result of the pipe function.</returns>
-    public delegate EcmaValue Func0(EcmaValue value);
-
-    /// <summary>
-    /// Encapsulates a native method that takes one argument from pipe.
-    /// </summary>
-    /// <param name="value">Piped value from object path or previous pipe function.</param>
-    /// <param name="arg1">First argument from pipe.</param>
-    /// <returns>Result of the pipe function.</returns>
-    public delegate EcmaValue Func1(EcmaValue value, EcmaValue arg1);
-
-    /// <summary>
-    /// Encapsulates a native method that takes two arguments from pipe.
-    /// </summary>
-    /// <param name="value">Piped value from object path or previous pipe function.</param>
-    /// <param name="arg1">First argument from pipe.</param>
-    /// <param name="arg2">Second argument from pipe.</param>
-    /// <returns>Result of the pipe function.</returns>
-    public delegate EcmaValue Func2(EcmaValue value, EcmaValue arg1, EcmaValue arg2);
-
-    /// <summary>
-    /// Encapsulates a native method that takes three arguments from pipe.
-    /// </summary>
-    /// <param name="value">Piped value from object path or previous pipe function.</param>
-    /// <param name="arg1">First argument from pipe.</param>
-    /// <param name="arg2">Second argument from pipe.</param>
-    /// <param name="arg3">Third argument from pipe.</param>
-    /// <returns>Result of the pipe function.</returns>
-    public delegate EcmaValue Func3(EcmaValue value, EcmaValue arg1, EcmaValue arg2, EcmaValue arg3);
-
-    /// <summary>
-    /// Encapsulates a native method that takes three arguments from pipe.
-    /// </summary>
-    /// <param name="value">Piped value from object path or previous pipe function.</param>
-    /// <param name="arg1">First argument from pipe.</param>
-    /// <param name="arg2">Second argument from pipe.</param>
-    /// <param name="arg3">Third argument from pipe.</param>
-    /// <param name="arg4">Forth argument from pipe.</param>
-    /// <returns>Result of the pipe function.</returns>
-    public delegate EcmaValue Func4(EcmaValue value, EcmaValue arg1, EcmaValue arg2, EcmaValue arg3, EcmaValue arg4);
-
-    /// <summary>
-    /// Encapsulates a native method that takes three arguments from pipe.
-    /// </summary>
-    /// <param name="value">Piped value from object path or previous pipe function.</param>
-    /// <param name="arg1">First argument from pipe.</param>
-    /// <param name="arg2">Second argument from pipe.</param>
-    /// <param name="arg3">Third argument from pipe.</param>
-    /// <param name="arg4">Forth argument from pipe.</param>
-    /// <param name="arg5">Fifth argument from pipe.</param>
-    /// <returns>Result of the pipe function.</returns>
-    public delegate EcmaValue Func5(EcmaValue value, EcmaValue arg1, EcmaValue arg2, EcmaValue arg3, EcmaValue arg4, EcmaValue arg5);
+    public abstract int ParameterCount { get; }
 
     /// <summary>
     /// Invokes the pipe function with the specified context.
@@ -83,6 +23,8 @@ namespace Codeless.WaterpipeSharp {
     /// <param name="context">Pipe context.</param>
     /// <returns>Result of the pipe function.</returns>
     public abstract EcmaValue Invoke(PipeContext context);
+
+    public abstract EcmaValue Invoke(PipeContext context, EcmaValue[] args);
 
     /// <summary>
     /// Creates a pipe function that takes arbitrary number of arguments or function arguments.
@@ -200,6 +142,72 @@ namespace Codeless.WaterpipeSharp {
       return (T)(object)Delegate.CreateDelegate(typeof(T), fn);
     }
 
+    #region Delegates
+    /// <summary>
+    /// Encapsulates a native method that takes arbitrary number of arguments or function arguments from pipe.
+    /// </summary>
+    /// <param name="context">Pipe context.</param>
+    /// <returns>Result of the pipe function.</returns>
+    public delegate EcmaValue Variadic(PipeContext context);
+
+    /// <summary>
+    /// Encapsulates a native method that takes no arguments from pipe.
+    /// </summary>
+    /// <param name="value">Piped value from object path or previous pipe function.</param>
+    /// <returns>Result of the pipe function.</returns>
+    public delegate EcmaValue Func0(EcmaValue value);
+
+    /// <summary>
+    /// Encapsulates a native method that takes one argument from pipe.
+    /// </summary>
+    /// <param name="value">Piped value from object path or previous pipe function.</param>
+    /// <param name="arg1">First argument from pipe.</param>
+    /// <returns>Result of the pipe function.</returns>
+    public delegate EcmaValue Func1(EcmaValue value, EcmaValue arg1);
+
+    /// <summary>
+    /// Encapsulates a native method that takes two arguments from pipe.
+    /// </summary>
+    /// <param name="value">Piped value from object path or previous pipe function.</param>
+    /// <param name="arg1">First argument from pipe.</param>
+    /// <param name="arg2">Second argument from pipe.</param>
+    /// <returns>Result of the pipe function.</returns>
+    public delegate EcmaValue Func2(EcmaValue value, EcmaValue arg1, EcmaValue arg2);
+
+    /// <summary>
+    /// Encapsulates a native method that takes three arguments from pipe.
+    /// </summary>
+    /// <param name="value">Piped value from object path or previous pipe function.</param>
+    /// <param name="arg1">First argument from pipe.</param>
+    /// <param name="arg2">Second argument from pipe.</param>
+    /// <param name="arg3">Third argument from pipe.</param>
+    /// <returns>Result of the pipe function.</returns>
+    public delegate EcmaValue Func3(EcmaValue value, EcmaValue arg1, EcmaValue arg2, EcmaValue arg3);
+
+    /// <summary>
+    /// Encapsulates a native method that takes three arguments from pipe.
+    /// </summary>
+    /// <param name="value">Piped value from object path or previous pipe function.</param>
+    /// <param name="arg1">First argument from pipe.</param>
+    /// <param name="arg2">Second argument from pipe.</param>
+    /// <param name="arg3">Third argument from pipe.</param>
+    /// <param name="arg4">Forth argument from pipe.</param>
+    /// <returns>Result of the pipe function.</returns>
+    public delegate EcmaValue Func4(EcmaValue value, EcmaValue arg1, EcmaValue arg2, EcmaValue arg3, EcmaValue arg4);
+
+    /// <summary>
+    /// Encapsulates a native method that takes three arguments from pipe.
+    /// </summary>
+    /// <param name="value">Piped value from object path or previous pipe function.</param>
+    /// <param name="arg1">First argument from pipe.</param>
+    /// <param name="arg2">Second argument from pipe.</param>
+    /// <param name="arg3">Third argument from pipe.</param>
+    /// <param name="arg4">Forth argument from pipe.</param>
+    /// <param name="arg5">Fifth argument from pipe.</param>
+    /// <returns>Result of the pipe function.</returns>
+    public delegate EcmaValue Func5(EcmaValue value, EcmaValue arg1, EcmaValue arg2, EcmaValue arg3, EcmaValue arg4, EcmaValue arg5);
+    #endregion
+
     #region Implemented classes
     private class EvaluatedPipeFunction : PipeFunction {
       private readonly TokenList tokens;
@@ -208,17 +216,21 @@ namespace Codeless.WaterpipeSharp {
         this.tokens = TokenList.FromString(template);
       }
 
+      public override bool IsVariadic => false;
+
+      public override int ParameterCount => 0;
+
       public override EcmaValue Invoke(PipeContext context) {
+        return Invoke(context, new[] { context.Value });
+      }
+
+      public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
         PipeExecutionException[] exceptions;
-        object result = EvaluationContext.Evaluate(tokens, context.Value, new EvaluateOptions(context.EvaluationContext.Options, context.Globals), out exceptions);
+        object result = EvaluationContext.Evaluate(tokens, args.ElementAtOrDefault(0), new EvaluateOptions(context.EvaluationContext.Options, context.Globals) { OutputRawValue = true }, out exceptions);
         foreach (PipeExecutionException ex in exceptions) {
           context.EvaluationContext.AddException(ex);
         }
-        if (context.EvaluationContext.Options.OutputXml) {
-          context.EvaluationContext.CurrentXmlElement.AppendChild((XmlNode)result);
-          return EcmaValue.Undefined;
-        }
-        return result.ToString();
+        return new EcmaValue(result);
       }
     }
 
@@ -229,8 +241,16 @@ namespace Codeless.WaterpipeSharp {
         this.fn = fn;
       }
 
+      public override bool IsVariadic => true;
+
+      public override int ParameterCount => 0;
+
       public override EcmaValue Invoke(PipeContext context) {
         return fn(context);
+      }
+
+      public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
+        throw new NotSupportedException();
       }
     }
 
@@ -241,8 +261,16 @@ namespace Codeless.WaterpipeSharp {
         this.fn = fn;
       }
 
+      public override bool IsVariadic => false;
+
+      public override int ParameterCount => 0;
+
       public override EcmaValue Invoke(PipeContext context) {
         return fn(context.Value);
+      }
+
+      public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
+        return args.Length >= 1 ? fn(args[0]) : fn(EcmaValue.Undefined);
       }
     }
 
@@ -253,8 +281,16 @@ namespace Codeless.WaterpipeSharp {
         this.fn = fn;
       }
 
+      public override bool IsVariadic => false;
+
+      public override int ParameterCount =>1;
+
       public override EcmaValue Invoke(PipeContext context) {
         return fn(context.Value, context.TakeArgument());
+      }
+
+      public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
+        return args.Length >= 2 ? fn(args[0], args[1]) : args.Length >= 1 ? fn(args[0], EcmaValue.Undefined) : fn(EcmaValue.Undefined, EcmaValue.Undefined);
       }
     }
 
@@ -265,8 +301,16 @@ namespace Codeless.WaterpipeSharp {
         this.fn = fn;
       }
 
+      public override bool IsVariadic => false;
+
+      public override int ParameterCount =>2;
+
       public override EcmaValue Invoke(PipeContext context) {
         return fn(context.Value, context.TakeArgument(), context.TakeArgument());
+      }
+
+      public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
+        throw new NotSupportedException();
       }
     }
 
@@ -277,8 +321,16 @@ namespace Codeless.WaterpipeSharp {
         this.fn = fn;
       }
 
+      public override bool IsVariadic => false;
+
+      public override int ParameterCount => 3;
+
       public override EcmaValue Invoke(PipeContext context) {
         return fn(context.Value, context.TakeArgument(), context.TakeArgument(), context.TakeArgument());
+      }
+
+      public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
+        throw new NotSupportedException();
       }
     }
 
@@ -289,8 +341,16 @@ namespace Codeless.WaterpipeSharp {
         this.fn = fn;
       }
 
+      public override bool IsVariadic => false;
+
+      public override int ParameterCount => 4;
+
       public override EcmaValue Invoke(PipeContext context) {
         return fn(context.Value, context.TakeArgument(), context.TakeArgument(), context.TakeArgument(), context.TakeArgument());
+      }
+
+      public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
+        throw new NotSupportedException();
       }
     }
 
@@ -301,8 +361,16 @@ namespace Codeless.WaterpipeSharp {
         this.fn = fn;
       }
 
+      public override bool IsVariadic => false;
+
+      public override int ParameterCount =>5;
+
       public override EcmaValue Invoke(PipeContext context) {
         return fn(context.Value, context.TakeArgument(), context.TakeArgument(), context.TakeArgument(), context.TakeArgument(), context.TakeArgument());
+      }
+
+      public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
+        throw new NotSupportedException();
       }
     }
     #endregion

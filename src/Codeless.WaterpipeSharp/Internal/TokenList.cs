@@ -19,10 +19,8 @@ namespace Codeless.WaterpipeSharp.Internal {
 
   [DebuggerDisplay("{Value,nq}")]
   internal class TokenList : Collection<Token> {
-    private static readonly Regex reConstruct = new Regex(
-      @"\{\{([\/!]|foreach(?=\s|\})|if(?:\snot)?(?=\s)|else(?:if(?:\snot)?(?=\s))?|&?(?!\}))\s*((?:\}(?!\})|[^}])*)\}\}");
-    private static readonly Regex reHtml = new Regex(
-      @"<(\/?)([^\s>\/]+)|\/?>|(\w+)(?:(?=[\s>\/])|="")|""");
+    private static readonly Regex reConstruct = new Regex(@"\{\{([\/!]|foreach(?=\s|\})|if(?:\snot)?(?=\s)|else(?:if(?:\snot)?(?=\s))?|&?(?!\}))\s*((?:\}(?!\})|[^}])*)\}\}");
+    private static readonly Regex reHtml = new Regex(@"<(\/?)([0-9a-z]+)|\/?>|([^\s=\/<>""0-9.-][^\s=\/<>""]*)(?:=""|$|(?=[\s=\/<>""]))|""");
     private static readonly string[] VoidTags = new[] { "area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr" };
 
     private const string TOKEN_IF = "if";
@@ -33,12 +31,13 @@ namespace Codeless.WaterpipeSharp.Internal {
     private const string TOKEN_FOREACH = "foreach";
 
     private static readonly ConcurrentDictionary<string, TokenList> cache = new ConcurrentDictionary<string, TokenList>();
-    private readonly Stack<ControlTokenInfo> controlStack = new Stack<ControlTokenInfo>();
-    private readonly Stack<HtmlOutputToken> htmlStack = new Stack<HtmlOutputToken>();
+    private readonly Stack<ControlTokenInfo> controlStack = new Stack<ControlTokenInfo>(new[] { new ControlTokenInfo("", 0, null, 0) });
+    private readonly Stack<OutputToken> htmlStack = new Stack<OutputToken>(new[] { new OutputToken { TagOpened = true } });
     private readonly string inputString;
 
     private Match m;
     private int lastIndex = 0;
+    private int htmlStartIndex;
 
     private TokenList(string inputString) {
       Guard.ArgumentNotNull(inputString, "inputString");
@@ -77,7 +76,7 @@ namespace Codeless.WaterpipeSharp.Internal {
     private void Parse() {
       for (m = reConstruct.Match(inputString); m.Success; m = m.NextMatch()) {
         if (lastIndex != m.Index) {
-          ParseTextContent(inputString.Substring(lastIndex, m.Index - lastIndex));
+          ParseHtmlContent(inputString.Substring(lastIndex, m.Index - lastIndex), 0);
         }
         lastIndex = m.Index + m.Length;
 
@@ -88,179 +87,178 @@ namespace Codeless.WaterpipeSharp.Internal {
             break;
           case "/":
             Assert(controlStack.Count > 0 && m2 == controlStack.Peek().TokenName);
+            ParseHtmlContent("");
             controlStack.Peek().Token.Index = this.Count;
             if (controlStack.Peek().TokenIf != null && controlStack.Peek().TokenIf.Index == 0) {
               controlStack.Peek().TokenIf.Index = this.Count;
             }
             if (m2 == TOKEN_FOREACH) {
-              this.Add(new IterationEndToken(controlStack.Peek().TokenIndex + 1));
+              Add(new IterationEndToken(controlStack.Peek().TokenIndex + 1));
             }
             controlStack.Pop();
             break;
           case TOKEN_IF:
           case TOKEN_IFNOT: {
               ConditionToken t = new ConditionToken(CreatePipe(), m1 == TOKEN_IFNOT);
-              controlStack.Push(new ControlTokenInfo(TOKEN_IF, this.Count, t));
-              this.Add(t);
+              controlStack.Push(new ControlTokenInfo(TOKEN_IF, this.Count, t, htmlStack.Count));
+              Add(t);
               break;
             }
           case TOKEN_ELSE:
           case TOKEN_ELSEIF:
           case TOKEN_ELSEIFNOT: {
               Assert(controlStack.Count > 0 && controlStack.Peek().TokenName == TOKEN_IF);
+              ParseHtmlContent("");
               ControlTokenInfo previousControl = controlStack.Pop();
-              controlStack.Push(new ControlTokenInfo(TOKEN_IF, this.Count, new BranchToken()));
+              controlStack.Push(new ControlTokenInfo(TOKEN_IF, this.Count, new BranchToken(), htmlStack.Count));
 
               (previousControl.TokenIf ?? previousControl.Token).Index = this.Count + 1;
               if (previousControl.Token.Type == TokenType.OP_JUMP) {
                 controlStack.Peek().Token = previousControl.Token;
               }
-              this.Add(controlStack.Peek().Token);
+              Add(controlStack.Peek().Token);
               if (m1 == TOKEN_ELSEIF || m1 == TOKEN_ELSEIFNOT) {
                 controlStack.Peek().TokenIf = new ConditionToken(CreatePipe(), m1 == TOKEN_ELSEIFNOT);
-                this.Add(controlStack.Peek().TokenIf);
+                Add(controlStack.Peek().TokenIf);
               }
               break;
             }
           case TOKEN_FOREACH: {
               IterationToken t = new IterationToken(CreatePipe());
-              controlStack.Push(new ControlTokenInfo(TOKEN_FOREACH, this.Count, t));
-              this.Add(t);
+              controlStack.Push(new ControlTokenInfo(TOKEN_FOREACH, this.Count, t, htmlStack.Count));
+              Add(t);
               break;
             }
           default:
-            this.Add(new EvaluateToken(CreatePipe(), m1 == "&"));
+            Add(new EvaluateToken(CreatePipe(), m1 == "&"));
             break;
         }
       }
-      if (lastIndex != inputString.Length) {
-        ParseTextContent(inputString.Substring(lastIndex));
-      }
+      ParseHtmlContent(inputString.Substring(lastIndex), 1);
     }
 
-    private void ParseTextContent(string str) {
+    private void ParseHtmlContent(string str) {
+      ParseHtmlContent(str, controlStack.Peek().HtmlStackCount);
+    }
+
+    private void ParseHtmlContent(string str, int htmlStackCount) {
       int start = this.Count;
       int lastIndex = 0;
+      htmlStartIndex = start;
+
       for (Match m = reHtml.Match(str); m.Success; m = m.NextMatch()) {
-        HtmlOutputToken current = htmlStack.Count > 0 ? htmlStack.Peek() : null;
         if (lastIndex != m.Index) {
-          AppendTextContent(str.Substring(lastIndex, m.Index - lastIndex));
+          AppendTextContent(str.Substring(lastIndex, m.Index - lastIndex), false);
         }
         lastIndex = m.Index + m.Length;
 
+        OutputToken current;
         switch (m.Value[0]) {
           case '<':
-            if (m.Groups[1].Success) {
-              if (current != null) {
-                if (current.TagName == m.Groups[2].Value) {
-                  current.TagOpened = false;
-                } else if (VoidTags.Contains(current.TagName)) {
-                  htmlStack.Pop();
-                  if (htmlStack.Count > 0) {
-                    current = htmlStack.Peek();
-                  } else {
-                    AppendTextContent(m.Value);
-                  }
-                }
+            while (htmlStack.Peek().TagName != null && VoidTags.Contains(htmlStack.Peek().TagName.ToLower()) && TryPopHtmlStack()) ;
+            current = htmlStack.Peek();
+            if (m.Groups[1].Success && m.Groups[1].Value.Length > 0) {
+              if (current.TagName != m.Groups[2].Value || htmlStackCount == 0 || htmlStack.Count <= htmlStackCount) {
+                current.MuteTagEnd = true;
+                current.TagOpened = null;
               } else {
-                AppendTextContent(m.Value);
+                AppendTextContent(m.Value, true);
+                current.TagOpened = false;
               }
             } else {
-              EndTextContent();
-              htmlStack.Push(new HtmlOutputToken(TokenType.HTMLOP_ELEMENT_START) { TagName = m.Groups[2].Value });
-              Add(htmlStack.Peek());
+              htmlStack.Push(new OutputToken { TagName = m.Groups[2].Value });
+              AppendTextContent(m.Value, true);
             }
-            break;
+            continue;
           case '>':
           case '/':
-            if (current != null && current.TagName != null) {
-              if (!current.TagOpened || m.Value == "/>") {
-                EndTextContent();
-                Add(new HtmlOutputToken(TokenType.HTMLOP_ELEMENT_END));
-                htmlStack.Pop();
-                StartTextContent();
-              } else if (m.Value == ">") {
-                current.TagOpened = true;
-                StartTextContent();
+            current = htmlStack.Peek();
+            if (current.TagName != null && (current.TagOpened != true || m.Value == "/>")) {
+              if (current.MuteTagEnd) {
+                current.MuteTagEnd = false;
+              } else {
+                AppendTextContent(m.Value, true);
               }
-            } else {
-              AppendTextContent(m.Value);
+              if ((current.TagOpened != false && m.Value != "/>") || !TryPopHtmlStack()) {
+                htmlStack.Peek().TagOpened = true;
+              }
+              continue;
             }
             break;
           case '"':
-            if (current != null && current.AttributeName != null) {
-              EndTextContent();
-              Add(new HtmlOutputToken(TokenType.HTMLOP_ATTR_END) { AttributeName = current.AttributeName });
-              htmlStack.Pop();
-            } else {
-              AppendTextContent(m.Value);
+            current = htmlStack.Peek();
+            if (current.AttributeName != null && TryPopHtmlStack()) {
+              AppendTextContent(m.Value, true);
+              continue;
             }
             break;
           default:
-            if (current != null) {
-              if (m.Value.IndexOf('=') < 0) {
-                Add(new HtmlOutputToken(TokenType.HTMLOP_ATTR_END) { AttributeName = m.Groups[3].Value });
-              } else {
-                htmlStack.Push(new HtmlOutputToken(TokenType.HTMLOP_ATTR_START) { AttributeName = m.Groups[3].Value });
-                current.Attributes.Add(m.Groups[3].Value, htmlStack.Peek());
-                Add(htmlStack.Peek());
-                StartTextContent();
+            current = htmlStack.Peek();
+            if (current.TagName != null && current.TagOpened != true) {
+              if (m.Value.IndexOf('=') >= 0) {
+                htmlStack.Push(new OutputToken { AttributeName = m.Groups[3].Value });
               }
-            } else {
-              AppendTextContent(m.Value);
+              AppendTextContent(" " + m.Value, true);
+              continue;
             }
             break;
         }
+        AppendTextContent(m.Value, false);
       }
       if (lastIndex != str.Length) {
-        AppendTextContent(str.Substring(lastIndex));
+        AppendTextContent(str.Substring(lastIndex), false);
       }
-      if (start < this.Count) {
-        HtmlOutputToken p = this[start] as HtmlOutputToken;
-        if (p != null) {
-          p.Value = str;
-          p.Index = this.Count;
+      if (htmlStackCount > 0) {
+        while (htmlStack.Count > htmlStackCount) {
+          AppendTextContent("</" + htmlStack.Pop().TagName + ">", true);
         }
       }
     }
 
-    private void StartTextContent() {
-      if (htmlStack.Count > 0) {
-        htmlStack.Peek().Offsets.Add(this.Count);
-      }
-    }
-
-    private void EndTextContent() {
-      if (htmlStack.Count > 0) {
-        List<int> offsets = htmlStack.Peek().Offsets;
-        if (offsets.Count > 0 && offsets.Last() == this.Count) {
-          offsets.RemoveAt(offsets.Count - 1);
+    private void AppendTextContent(string str, bool stripWS) {
+      OutputToken current = htmlStack.Peek();
+      if (stripWS || current.AttributeName != null || current.TagOpened == true) {
+        str = stripWS ? str : Helper.Escape(Regex.Replace(str, "\\s+", htmlStack.Count > 1 && current.TagOpened == true ? " " : ""), true);
+        if (str != "") {
+          OutputToken last1 = this.Count > 1 ? this[this.Count - 1] as OutputToken : null;
+          OutputToken last2 = this.Count > 2 ? this[this.Count - 2] as OutputToken : null;
+          if (this.Count > htmlStartIndex && last1 != null) {
+            last1.Value += str;
+          } else if (this.Count > htmlStartIndex + 1 && last2 != null) {
+            last2.Value += (stripWS || last2.TrimEnd || last1 == null ? "" : last1.Value) + str;
+            Remove(last1);
+          } else {
+            Add(new OutputToken { Value = str, TrimStart = stripWS });
+          }
+          OutputToken ot = this[this.Count - 1] as OutputToken;
+          if (ot != null) {
+            ot.TrimEnd = stripWS;
+          }
         } else {
-          offsets.Add(this.Count);
+          Add(new SpaceToken());
         }
       }
     }
 
-    private void AppendTextContent(string str) {
-      if (htmlStack.Count > 0) {
-        HtmlOutputToken current = htmlStack.Peek();
-        if (current.AttributeName != null || current.TagOpened) {
-          Add(new HtmlOutputToken(TokenType.HTMLOP_TEXT) { Text = str });
-        }
-      } else {
-        Add(new HtmlOutputToken(TokenType.HTMLOP_TEXT) { Text = str });
+    private bool TryPopHtmlStack() {
+      if (htmlStack.Count > controlStack.Peek().HtmlStackCount) {
+        htmlStack.Pop();
+        return true;
       }
+      return false;
     }
 
     private class ControlTokenInfo {
-      public ControlTokenInfo(string tokenType, int index, ControlToken token) {
+      public ControlTokenInfo(string tokenType, int index, ControlToken token, int htmlStackCount) {
         this.TokenName = tokenType;
         this.TokenIndex = index;
         this.Token = token;
+        this.HtmlStackCount = htmlStackCount;
       }
 
       public int TokenIndex { get; }
       public string TokenName { get; }
+      public int HtmlStackCount { get; }
       public ControlToken Token { get; set; }
       public ControlToken TokenIf { get; set; }
     }

@@ -9,6 +9,16 @@ using System.Text;
 using System.Web.UI;
 
 namespace Codeless.WaterpipeSharp {
+
+ public  enum PipeState {
+    Invalid,
+    End,
+    Func,
+    Auto,
+    Constant,
+    Path
+  }
+
   public class PipeExecutionException : WaterpipeException {
     internal PipeExecutionException(string message, Exception innerException, CallSite callsite)
       : base(message, innerException, callsite) { }
@@ -53,6 +63,14 @@ namespace Codeless.WaterpipeSharp {
       get { return i <= end; }
     }
 
+    public PipeState State { get {
+        return i > end ? PipeState.End :
+          pipe[i].Length > 0 ? PipeState.Func :
+          pipe[i].EvaluationMode == PipeArgumentEvaluationMode.Auto ? PipeState.Auto :
+          pipe[i].EvaluationMode == PipeArgumentEvaluationMode.Constant ? PipeState.Constant :
+          PipeState.Path;
+      } }
+
     public EcmaValue Evaluate(string objectPath) {
       return ObjectPath.FromString(objectPath).Evaluate(context);
     }
@@ -84,10 +102,10 @@ namespace Codeless.WaterpipeSharp {
     }
 
     public EcmaValue TakeArgument() {
-      return TakeArgument(true);
+      return TakeArgument(false);
     }
 
-    public EcmaValue TakeArgument(bool evaluateLambda) {
+    public EcmaValue TakeArgument(bool preferObject) {
       bool reset = resetPos == i;
       if (i > end) {
         return reset ? input : EcmaValue.Undefined;
@@ -95,15 +113,13 @@ namespace Codeless.WaterpipeSharp {
       if (pipe[i].EvaluationMode == PipeArgumentEvaluationMode.Constant) {
         return pipe[i++].Value;
       }
-      if (evaluateLambda) {
-        PipeLambda fn = TakeLambda();
-        if (fn != null) {
-          return fn.Invoke(reset ? input : this.Value);
-        }
+      PipeLambda fn = TakeLambda();
+      if (fn != null) {
+        return fn.Invoke(this, reset ? input : this.Value);
       }
       EcmaValue value;
       bool valid = pipe[i].ObjectPath.TryEvaluate(context, reset, out value);
-      if (pipe[i].EvaluationMode == PipeArgumentEvaluationMode.Evaluated || (valid && (reset || !this.Value.IsPrimitive || value.IsPrimitive))) {
+      if (pipe[i].EvaluationMode == PipeArgumentEvaluationMode.Evaluated || (valid && (reset || preferObject || !this.Value.IsPrimitive || value.IsPrimitive))) {
         ++i;
         return value;
       }
@@ -172,7 +188,7 @@ namespace Codeless.WaterpipeSharp {
         this.pipe = pipe;
       }
 
-      public EcmaValue Invoke(EcmaValue obj, EcmaValue index) {
+      public EcmaValue Invoke(PipeContext dummy, EcmaValue obj, EcmaValue index) {
         try {
           pipe.EvaluationContext.Push(obj, index);
           return pipe.Evaluate();

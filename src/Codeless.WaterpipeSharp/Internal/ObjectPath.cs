@@ -121,13 +121,14 @@ namespace Codeless.WaterpipeSharp.Internal {
           int j = 0;
           for (int length = context.StackCount; j < length; j++) {
             value = context.ValueAt(j);
-            if (HasProperty(value, name)) {
+            if (Helper.HasProperty(value, name)) {
               break;
             }
           }
           if (j == context.StackCount) {
             value = new EcmaValue(context.Globals);
-            if (!HasProperty(value, name)) {
+            if (!Helper.HasProperty(value, name)) {
+              value = default(EcmaValue);
               return false;
             }
           }
@@ -139,17 +140,6 @@ namespace Codeless.WaterpipeSharp.Internal {
         value = value[name];
       }
       return valid;
-    }
-
-    private static bool HasProperty(EcmaValue value, string name) {
-      if (value.IsNullOrUndefined) {
-        return false;
-      }
-      int dummy;
-      if (value.IsArrayLike && Int32.TryParse(name, out dummy)) {
-        return true;
-      }
-      return value.HasProperty(name);
     }
   }
 

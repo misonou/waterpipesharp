@@ -16,7 +16,6 @@ namespace Codeless.WaterpipeSharp {
     }
 
     public EvaluateOptions(EvaluateOptions options, PipeGlobal parent) {
-      this.OutputXml = options.OutputXml;
       this.Globals = new PipeGlobal(parent);
     }
 
@@ -25,6 +24,6 @@ namespace Codeless.WaterpipeSharp {
     /// </summary>
     public PipeGlobal Globals { get; set; }
 
-    internal bool OutputXml { get; set; }
+    internal bool OutputRawValue { get; set; }
   }
 }

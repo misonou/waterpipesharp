@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -40,13 +41,13 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     #region Variable functions
     public static EcmaValue As(PipeContext context) {
-      context.Globals[(string)context.TakeArgumentAsRaw()] = context.Value;
+      context.Globals[Helper.String(context.TakeArgumentAsRaw())] = context.Value;
       return context.Value;
     }
 
     public static EcmaValue Let(PipeContext context) {
       while (context.HasArgument) {
-        string name = (string)context.TakeArgumentAsRaw();
+        string name = Helper.String(context.TakeArgumentAsRaw());
         context.Globals[name] = context.TakeArgument();
       }
       return EcmaValue.Undefined;
@@ -80,12 +81,34 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     [BuiltInPipeFunctionAlias("==")]
     public static EcmaValue Equals(EcmaValue a, EcmaValue b) {
-      return (string)a == (string)b;
+      return Helper.String(a) == Helper.String(b);
     }
 
     [BuiltInPipeFunctionAlias("!=")]
     public static EcmaValue NotEquals(EcmaValue a, EcmaValue b) {
-      return (string)a != (string)b;
+      return Helper.String(a) != Helper.String(b);
+    }
+
+    [BuiltInPipeFunctionAlias("~=")]
+    public static EcmaValue IEquals(EcmaValue a, EcmaValue b) {
+      return Helper.String(a).Equals(Helper.String(b), StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    [BuiltInPipeFunctionAlias("!~=")]
+    public static EcmaValue INotEquals(EcmaValue a, EcmaValue b) {
+      return !Helper.String(a).Equals(Helper.String(b), StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    [BuiltInPipeFunctionAlias("^=")]
+    public static EcmaValue StartsWith(EcmaValue a, EcmaValue b) {
+      string needle = Helper.String(b);
+      return !String.IsNullOrEmpty(needle) && Helper.String(a).StartsWith(needle, StringComparison.Ordinal);
+    }
+
+    [BuiltInPipeFunctionAlias("$=")]
+    public static EcmaValue EndsWith(EcmaValue a, EcmaValue b) {
+      string needle = Helper.String(b);
+      return !String.IsNullOrEmpty(needle) && Helper.String(a).EndsWith(needle, StringComparison.Ordinal);
     }
 
     public static EcmaValue Even(EcmaValue num) {
@@ -96,13 +119,14 @@ namespace Codeless.WaterpipeSharp.Internal {
       return (num & 1) == 1;
     }
 
+    [BuiltInPipeFunctionAlias("*=")]
     public static EcmaValue Contains(EcmaValue str, EcmaValue needle) {
-      return ((string)str).IndexOf((string)needle) >= 0;
+      return Helper.String(str).IndexOf(Helper.String(needle)) >= 0;
     }
 
     public static EcmaValue Like(EcmaValue str, EcmaValue regex) {
       EcmaRegExp re;
-      return EcmaRegExp.TryParse((string)regex, out re) && re.Test((string)str);
+      return EcmaRegExp.TryParse(Helper.String(regex), out re) && re.Test(Helper.String(str));
     }
 
     [BuiltInPipeFunctionAlias("!")]
@@ -113,7 +137,12 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     #region Conditional functions
     public static EcmaValue Or(EcmaValue obj, EcmaValue val) {
-      return (bool)obj ? obj : val;
+      return obj ? obj : val;
+    }
+
+    [BuiltInPipeFunctionAlias("??", UseAliasOnly = true)]
+    public static EcmaValue Coalesce(EcmaValue obj, EcmaValue val) {
+      return obj.IsNullOrUndefined ? val : obj;
     }
 
     public static EcmaValue Choose(EcmaValue @bool, EcmaValue trueValue, EcmaValue falseValue) {
@@ -125,39 +154,39 @@ namespace Codeless.WaterpipeSharp.Internal {
       PipeLambda testFn = context.TakeLambda(PipeLambdaFactory.Constant);
       PipeLambda trueFn = context.TakeLambda(PipeLambdaFactory.Constant);
       PipeLambda falseFn = context.TakeLambda(PipeLambdaFactory.Constant);
-      return testFn.Invoke(context.Value) ? trueFn.Invoke(context.Value) : falseFn.Invoke(context.Value);
+      return testFn.Invoke(context, context.Value) ? trueFn.Invoke(context, context.Value) : falseFn.Invoke(context, context.Value);
     }
     #endregion
 
     #region String functions
     public static EcmaValue Concat(EcmaValue a, EcmaValue b) {
-      return (string)a + (string)b;
+      return Helper.String(a) + Helper.String(b);
     }
 
     public static EcmaValue Substr(EcmaValue str, EcmaValue start, EcmaValue len) {
       if (len.IsNullOrUndefined) {
-        return ((string)str).Substring((int)start);
+        return Helper.String(str).Substring((int)start);
       }
-      return ((string)str).Substring((int)start, (int)len);
+      return Helper.String(str).Substring((int)start, (int)len);
     }
 
     public static EcmaValue Replace(PipeContext context) {
-      string needle = (string)context.TakeArgument();
+      string needle = Helper.String(context.TakeArgument());
       string replacement = null;
       PipeLambda fn = context.TakeLambda();
       if (fn == null) {
-        replacement = (string)context.TakeArgument();
+        replacement = Helper.String(context.TakeArgument());
       }
 
       EcmaRegExp re;
       if (EcmaRegExp.TryParse(needle, out re)) {
         if (fn != null) {
-          return re.Replace((string)context.Value, m => fn.Invoke(m));
+          return re.Replace(Helper.String(context.Value), m => fn.Invoke(context, m));
         }
-        return re.Replace((string)context.Value, replacement);
+        return re.Replace(Helper.String(context.Value), replacement);
       }
-      string str = (string)context.Value;
-      int pos = str.IndexOf(needle);
+      string str = Helper.String(context.Value);
+      int pos = str.IndexOf(needle, StringComparison.Ordinal);
       if (pos >= 0) {
         return String.Concat(str.Substring(0, pos), replacement, str.Substring(pos + needle.Length));
       }
@@ -165,45 +194,45 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue Trim(EcmaValue str) {
-      return ((string)str).Trim();
+      return Helper.String(str).Trim();
     }
 
     public static EcmaValue TrimStart(EcmaValue str) {
-      return ((string)str).TrimStart();
+      return Helper.String(str).TrimStart();
     }
 
     public static EcmaValue TrimEnd(EcmaValue str) {
-      return ((string)str).TrimEnd();
+      return Helper.String(str).TrimEnd();
     }
 
     public static EcmaValue PadStart(EcmaValue str, EcmaValue needle) {
-      string strStr = (string)str;
-      string strNeedle = (string)needle;
+      string strStr = Helper.String(str);
+      string strNeedle = Helper.String(needle);
       return strStr.Substring(0, strNeedle.Length) != needle ? needle + str : str;
     }
 
     public static EcmaValue PadEnd(EcmaValue str, EcmaValue needle) {
-      string strStr = (string)str;
-      string strNeedle = (string)needle;
+      string strStr = Helper.String(str);
+      string strNeedle = Helper.String(needle);
       return strStr.Substring(Math.Max(0, strStr.Length - strNeedle.Length)) != needle ? str + needle : str;
     }
 
     public static EcmaValue RemoveStart(EcmaValue str, EcmaValue needle) {
-      string strStr = (string)str;
-      string strNeedle = (string)needle;
+      string strStr = Helper.String(str);
+      string strNeedle = Helper.String(needle);
       return strStr.Substring(0, strNeedle.Length) == needle ? strStr.Substring(strNeedle.Length) : strStr;
     }
 
     public static EcmaValue RemoveEnd(EcmaValue str, EcmaValue needle) {
-      string strStr = (string)str;
-      string strNeedle = (string)needle;
-      return strStr.Substring(Math.Max(0, strStr.Length - strNeedle.Length)) == needle ? ((string)str).Substring(0, strStr.Length - strNeedle.Length) : strStr;
+      string strStr = Helper.String(str);
+      string strNeedle = Helper.String(needle);
+      return strStr.Substring(Math.Max(0, strStr.Length - strNeedle.Length)) == needle ? Helper.String(str).Substring(0, strStr.Length - strNeedle.Length) : strStr;
     }
 
     public static EcmaValue CutBefore(EcmaValue str, EcmaValue needle) {
-      string strStr = (string)str;
-      string strNeedle = (string)needle;
-      int pos = strStr.IndexOf((string)needle);
+      string strStr = Helper.String(str);
+      string strNeedle = Helper.String(needle);
+      int pos = strStr.IndexOf(Helper.String(needle), StringComparison.Ordinal);
       if (pos >= 0) {
         return strStr.Substring(0, pos);
       }
@@ -211,9 +240,9 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue CutBeforeLast(EcmaValue str, EcmaValue needle) {
-      string strStr = (string)str;
-      string strNeedle = (string)needle;
-      int pos = strStr.LastIndexOf((string)needle);
+      string strStr = Helper.String(str);
+      string strNeedle = Helper.String(needle);
+      int pos = strStr.LastIndexOf(Helper.String(needle), StringComparison.Ordinal);
       if (pos >= 0) {
         return strStr.Substring(0, pos);
       }
@@ -221,9 +250,9 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue CutAfter(EcmaValue str, EcmaValue needle) {
-      string strStr = (string)str;
-      string strNeedle = (string)needle;
-      int pos = strStr.IndexOf((string)needle);
+      string strStr = Helper.String(str);
+      string strNeedle = Helper.String(needle);
+      int pos = strStr.IndexOf(Helper.String(needle), StringComparison.Ordinal);
       if (pos >= 0) {
         return strStr.Substring(strNeedle.Length + pos);
       }
@@ -231,9 +260,9 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue CutAfterLast(EcmaValue str, EcmaValue needle) {
-      string strStr = (string)str;
-      string strNeedle = (string)needle;
-      int pos = strStr.LastIndexOf((string)needle);
+      string strStr = Helper.String(str);
+      string strNeedle = Helper.String(needle);
+      int pos = strStr.LastIndexOf(Helper.String(needle), StringComparison.Ordinal);
       if (pos >= 0) {
         return strStr.Substring(strNeedle.Length + pos);
       }
@@ -241,24 +270,41 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue Split(EcmaValue str, EcmaValue separator) {
-      return new EcmaValue(((string)str).Split(new string[] { (string)separator }, StringSplitOptions.RemoveEmptyEntries));
+      return new EcmaValue(Helper.String(str).Split(new string[] { Helper.String(separator) }, StringSplitOptions.RemoveEmptyEntries));
     }
 
     public static EcmaValue Repeat(EcmaValue count, EcmaValue str) {
-      return Enumerable.Range(0, (int)(+count).Or(0)).Aggregate("", (a, v) => a + (string)str);
+      string strStr = Helper.String(str);
+      int intCount = (int)(+count).Or(0);
+      StringBuilder sb = new StringBuilder(strStr.Length * intCount);
+      for (int i = 0; i < intCount; i++) {
+        sb.Append(strStr);
+      }
+      return sb.ToString();
     }
 
     public static EcmaValue Upper(EcmaValue str) {
-      return ((string)str).ToUpper();
+      return Helper.String(str).ToUpper();
     }
 
     public static EcmaValue Lower(EcmaValue str) {
-      return ((string)str).ToLower();
+      return Helper.String(str).ToLower();
     }
 
     public static EcmaValue UCFirst(EcmaValue str) {
-      string strStr = (string)str;
+      string strStr = Helper.String(str);
       return strStr.Substring(0, 1).ToUpper() + strStr.Substring(1);
+    }
+
+    public static EcmaValue LCFirst(EcmaValue str) {
+      string strStr = Helper.String(str);
+      return strStr.Substring(0, 1).ToLower() + strStr.Substring(1);
+    }
+
+    public static EcmaValue Hyphenate(EcmaValue str) {
+      return Regex.Replace(Helper.String(str), "[A-Z](?:[A-Z]+(?=$|[A-Z]))?", m => {
+        return (m.Index > 0 ? "-" : "") + m.Value.ToLower();
+      });
     }
     #endregion
 
@@ -349,7 +395,7 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     public static EcmaValue Join(EcmaValue value, EcmaValue str) {
       EcmaValue[] arr = value.ToArray();
-      return String.Join((string)str, arr.Select(v => v.ToString()).ToArray());
+      return String.Join(Helper.String(str), arr.Select(v => v.ToString()).ToArray());
     }
 
     public static EcmaValue Reverse(EcmaValue value) {
@@ -373,23 +419,27 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue First(PipeContext context) {
-      return context.Value.First(context.TakeLambda(PipeLambdaFactory.PropertyAccess));
+      return context.Value.First(context, Helper.DetectKeyLambda(context, context.Value));
     }
 
     public static EcmaValue Any(PipeContext context) {
-      return context.Value.First(context.TakeLambda(PipeLambdaFactory.PropertyAccess), true);
+      return context.Value.First(context, Helper.DetectKeyLambda(context, context.Value), true);
     }
 
     public static EcmaValue All(PipeContext context) {
-      return !(bool)context.Value.First(context.TakeLambda(PipeLambdaFactory.PropertyAccess), true, true);
+      return !(bool)context.Value.First(context, Helper.DetectKeyLambda(context, context.Value), true, true);
+    }
+
+    public static EcmaValue None(PipeContext context) {
+      return !(bool)context.Value.First(context, Helper.DetectKeyLambda(context, context.Value), true);
     }
 
     public static EcmaValue Where(PipeContext context) {
-      return context.Value.Where(context.TakeLambda(PipeLambdaFactory.PropertyAccess));
+      return context.Value.Where(context, Helper.DetectKeyLambda(context, context.Value));
     }
 
     public static EcmaValue Map(PipeContext context) {
-      return context.Value.Map(context.TakeLambda(PipeLambdaFactory.PropertyAccess));
+      return context.Value.Map(context, Helper.DetectKeyLambda(context, context.Value));
     }
 
     public static EcmaValue Sum(PipeContext context) {
@@ -401,16 +451,16 @@ namespace Codeless.WaterpipeSharp.Internal {
       }
       if (fn == null) {
         if (context.HasArgument) {
-          fn = context.TakeLambda(PipeLambdaFactory.PropertyAccess);
+          fn = Helper.DetectKeyLambda(context, context.Value);
         } else {
-          fn = (a, b) => a;
+          fn = (c, a, b) => a;
         }
       }
       foreach (EcmaPropertyEntry item in context.Value.EnumerateEntries()) {
         if (result != EcmaValue.Undefined) {
-          result = result + fn.Invoke(item);
+          result = result + fn.Invoke(context, item);
         } else {
-          result = fn.Invoke(item);
+          result = fn.Invoke(context, item);
         }
       }
       return result;
@@ -418,10 +468,10 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     public static EcmaValue SortBy(PipeContext context) {
       List<object> array = new List<object>();
-      PipeLambda fn = context.TakeLambda(PipeLambdaFactory.PropertyAccess);
+      PipeLambda fn = Helper.DetectKeyLambda(context, context.Value);
       int i = 0;
       foreach (EcmaPropertyEntry item in context.Value.EnumerateEntries()) {
-        array.Add(new object[] { fn.Invoke(item), ++i, item.Key.ToString() });
+        array.Add(new object[] { fn.Invoke(context, item), ++i, item.Key.ToString() });
       }
       array.Sort(PipeValueComparer.Default);
 
@@ -438,7 +488,7 @@ namespace Codeless.WaterpipeSharp.Internal {
         Hashtable ht = new Hashtable();
         List<EcmaValue> result = new List<EcmaValue>();
         foreach (EcmaValue item in value.EnumerateValues()) {
-          string key = (string)item;
+          string key = Helper.String(item);
           if (!ht.ContainsKey(key)) {
             ht.Add(key, null);
             result.Add(item);
@@ -451,10 +501,10 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     public static EcmaValue GroupBy(PipeContext context) {
       Dictionary<string, PipeValueObjectBuilder> dict = new Dictionary<string, PipeValueObjectBuilder>();
-      PipeLambda fn = context.TakeLambda(PipeLambdaFactory.PropertyAccess);
+      PipeLambda fn = Helper.DetectKeyLambda(context, context.Value);
 
       foreach (EcmaPropertyEntry entry in context.Value.EnumerateEntries()) {
-        string key = (string)fn.Invoke(entry);
+        string key = Helper.String(fn.Invoke(context, entry));
         if (!dict.ContainsKey(key)) {
           dict[key] = new PipeValueObjectBuilder(context.Value.IsArrayLike);
         }
@@ -466,12 +516,17 @@ namespace Codeless.WaterpipeSharp.Internal {
       }
       return result.ToPipeValue();
     }
+
+    public static EcmaValue In(PipeContext context) {
+      EcmaValue b = context.TakeArgument(true);
+      return b.IsArrayLike ? b.Invoke("indexOf", context.Value) >= 0 : b.Type == EcmaValueType.Object && b.HasProperty(EcmaPropertyKey.FromValue(context.Value));
+    }
     #endregion
 
     #region Formatting functions
     [BuiltInPipeFunctionAlias(":printf", UseAliasOnly = true)]
     public static EcmaValue FormatPrintf(EcmaValue value, EcmaValue format) {
-      return StdIO.Sprintf((string)format, value.GetUnderlyingObject());
+      return StdIO.Sprintf(Helper.String(format), value.GetUnderlyingObject());
     }
 
     [BuiltInPipeFunctionAlias(":query", UseAliasOnly = true)]
@@ -483,7 +538,7 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     [BuiltInPipeFunctionAlias(":json", UseAliasOnly = true)]
     public static EcmaValue FormatJson(EcmaValue value) {
-      return Json.Stringify(value, EcmaValue.Undefined, EcmaValue.Undefined);
+      return Helper.Json(value);
     }
 
     [BuiltInPipeFunctionAlias(":date", UseAliasOnly = true)]
@@ -494,7 +549,7 @@ namespace Codeless.WaterpipeSharp.Internal {
       } else {
         d = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(timestamp.ToDouble());
       }
-      return d.ToLocalTime().ToString((string)format);
+      return d.ToLocalTime().ToString(Helper.String(format), DateTimeFormatInfo.InvariantInfo);
     }
     #endregion
 

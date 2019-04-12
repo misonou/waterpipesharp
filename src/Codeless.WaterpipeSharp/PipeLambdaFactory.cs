@@ -12,14 +12,14 @@ namespace Codeless.WaterpipeSharp {
     public abstract PipeLambda CreateLambda(EcmaValue value);
 
     private class ConstantPipeLambdaFactory : PipeLambdaFactory {
-      public override PipeLambda CreateLambda(EcmaValue obj) {
-        return (a, b) => obj;
+      public override PipeLambda CreateLambda(EcmaValue value) {
+        return (c, a, b) => value;
       }
     }
 
     private class PropertyAccessPipeLambdaFactory : PipeLambdaFactory {
-      public override PipeLambda CreateLambda(EcmaValue obj) {
-        return (a, b) => a[(string)obj];
+      public override PipeLambda CreateLambda(EcmaValue value) {
+        return (c, a, b) => a[(string)value];
       }
     }
   }

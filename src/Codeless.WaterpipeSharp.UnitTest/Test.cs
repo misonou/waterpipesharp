@@ -1,8 +1,12 @@
 ﻿using Codeless.Ecma;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Web.Script.Serialization;
+using System.IO;
+using System.Linq;
 
 namespace Codeless.WaterpipeSharp.UnitTest {
   [TestFixture]
@@ -11,7 +15,8 @@ namespace Codeless.WaterpipeSharp.UnitTest {
     public static readonly List<TestCaseData> tests = new List<TestCaseData>();
 
     static Test() {
-      IDictionary spec = (IDictionary)new JavaScriptSerializer().DeserializeObject(System.IO.File.ReadAllText("test.json"));
+      Directory.SetCurrentDirectory(TestContext.CurrentContext.TestDirectory);
+      IDictionary spec = (IDictionary)ToSimpleObjectGraph((JToken)JsonConvert.DeserializeObject(File.ReadAllText("test.json")));
       foreach (DictionaryEntry e in (IDictionary)spec["globals"]) {
         globals[(string)e.Key] = new EcmaValue(e.Value);
       }
@@ -27,7 +32,7 @@ namespace Codeless.WaterpipeSharp.UnitTest {
       foreach (DictionaryEntry e in (IDictionary)spec["tests"]) {
         foreach (DictionaryEntry f in (IDictionary)e.Value) {
           IDictionary obj = (IDictionary)f.Value;
-          TestCaseData test = new TestCaseData(obj["input"], obj["template"], obj["expect"], obj["globals"], obj["exception"]);
+          TestCaseData test = new TestCaseData(obj["input"], obj["template"] ?? "", obj["expect"], obj["globals"], obj["exception"], obj["func"]);
           test.SetName("<" + (string)e.Key + ": " + (string)f.Key + ">");
           tests.Add(test);
         }
@@ -35,19 +40,49 @@ namespace Codeless.WaterpipeSharp.UnitTest {
     }
 
     [Test, TestCaseSource("tests")]
-    public void Run(object input, string template, string expected, IDictionary myGlobals, bool? exception) {
+    public void Run(object input, string template, object expected, IDictionary myGlobals, bool? exception, string func) {
       EvaluateOptions options = new EvaluateOptions();
       if (myGlobals != null) {
         options.Globals = new PipeGlobal(myGlobals);
       } else {
         options.Globals = globals;
       }
+      Func<string, object, EvaluateOptions, object> execute = func == "eval" ?
+        (Func<string, object, EvaluateOptions, object>)Waterpipe.EvaluateSingle :
+        (Func<string, object, EvaluateOptions, object>)Waterpipe.Evaluate;
       if (exception.HasValue && exception.Value) {
-        Assert.Throws(Is.InstanceOf<WaterpipeException>(), () => Waterpipe.Evaluate(template ?? "", input, options));
+        Assert.Throws(Is.InstanceOf<WaterpipeException>(), () => execute(template, input, options));
       } else {
-        string actual = Waterpipe.Evaluate(template ?? "", input, options);
-        Assert.AreEqual(expected, actual);
+        object actual = execute(template, input, options);
+        Assert.AreEqual(ToComparableResult(expected), ToComparableResult(actual));
       }
+    }
+
+    private static string ToComparableResult(object value) {
+      if (value == null || value is string) {
+        return (string)value;
+      }
+      return Json.Stringify(new EcmaValue(value));
+    }
+
+    private static object ToSimpleObjectGraph(JToken value) {
+      switch (value.Type) {
+        case JTokenType.Object:
+          return ((JObject)value).Properties().ToDictionary(v => v.Name, v => ToSimpleObjectGraph(v.Value));
+        case JTokenType.Array:
+          return ((JArray)value).Select(ToSimpleObjectGraph).ToList();
+        case JTokenType.String:
+          return value.ToString();
+        case JTokenType.Boolean:
+          return value.ToObject<bool>();
+        case JTokenType.Null:
+          return null;
+        case JTokenType.Integer:
+          return value.ToObject<int>();
+        case JTokenType.Float:
+          return value.ToObject<double>();
+      }
+      throw new NotSupportedException();
     }
   }
 }

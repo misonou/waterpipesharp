@@ -19,9 +19,11 @@ namespace Codeless.WaterpipeSharp.Internal {
     private readonly List<PipeExecutionException> exceptions = new List<PipeExecutionException>();
     private readonly Stack<XmlElement> xmlStack = new Stack<XmlElement>();
     private readonly Stack<EvaluationStack> objStack = new Stack<EvaluationStack>();
-    private readonly EcmaValue data;
     private readonly TokenList tokens;
-    private int evalCount;
+    [ThreadStatic]
+    private static int evalCount;
+
+    private enum OutputMode { Undecided, String, RawValue }
 
     static EvaluationContext() {
       foreach (MethodInfo method in typeof(BuiltInPipeFunction).GetMethods(BindingFlags.Static | BindingFlags.Public)) {
@@ -39,16 +41,10 @@ namespace Codeless.WaterpipeSharp.Internal {
     private EvaluationContext(TokenList tokens, EcmaValue data, EvaluateOptions options) {
       Guard.ArgumentNotNull(tokens, "tokens");
       Guard.ArgumentNotNull(options, "options");
+      this.Globals = new PipeGlobal(options.Globals);
       this.Options = options;
       this.tokens = tokens;
-      this.data = data;
       objStack.Push(new EvaluationStack(data));
-
-      if (options.OutputXml) {
-        XmlDocument doc = new XmlDocument();
-        xmlStack.Push(doc.DocumentElement);
-      }
-      this.Globals = new PipeGlobal(options.Globals);
     }
 
     public EvaluateOptions Options { get; }
@@ -65,10 +61,6 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     public EvaluationStack Current {
       get { return objStack.Peek(); }
-    }
-
-    public XmlElement CurrentXmlElement {
-      get { return xmlStack.Peek(); }
     }
 
     public PipeExecutionException[] Exceptions {
@@ -97,93 +89,6 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     public void AddException(PipeExecutionException ex) {
       exceptions.Add(ex);
-    }
-
-    private object Evaluate() {
-      StringBuilder sb = new StringBuilder();
-      try {
-        int i = 0;
-        int e = tokens.Count;
-        while (i < e) {
-          Token t = tokens[i++];
-          switch (t.Type) {
-            case TokenType.OP_EVAL:
-              EvaluateToken et = (EvaluateToken)t;
-              int prevCount = evalCount;
-              EcmaValue result = et.Expression.Evaluate(this);
-              if (!result.IsNullOrUndefined && !result.IsNaN) {
-                string str = result.Type == EcmaValueType.Object ? Json.Stringify(result, EcmaValue.Undefined, EcmaValue.Undefined) : result.ToString();
-                if (evalCount != prevCount || et.SuppressHtmlEncode) {
-                  sb.Append(str);
-                } else {
-                  sb.Append(HttpUtility.HtmlEncode(str));
-                }
-              }
-              break;
-            case TokenType.OP_ITER:
-              IterationToken it = (IterationToken)t;
-              objStack.Push(new EvaluationStack(it.Expression.Evaluate(this)));
-              if (!objStack.Peek().MoveNext()) {
-                i = it.Index;
-              }
-              break;
-            case TokenType.OP_ITER_END:
-              IterationEndToken iet = (IterationEndToken)t;
-              if (!objStack.Peek().MoveNext()) {
-                Pop();
-              } else {
-                i = iet.Index;
-              }
-              break;
-            case TokenType.OP_TEST:
-              ConditionToken ct = (ConditionToken)t;
-              if (!(bool)ct.Expression.Evaluate(this) ^ ct.Negate) {
-                i = ct.Index;
-              }
-              break;
-            case TokenType.OP_JUMP:
-              i = ((BranchToken)t).Index;
-              break;
-            default:
-              OutputToken ot = (OutputToken)t;
-              if (this.Options.OutputXml) {
-                XmlElement currentElm = xmlStack.Peek();
-                HtmlOutputToken ht = (HtmlOutputToken)ot;
-                switch (t.Type) {
-                  case TokenType.HTMLOP_ELEMENT_START:
-                    FlushOutput(sb, currentElm);
-                    xmlStack.Push(currentElm.OwnerDocument.CreateElement(ht.TagName));
-                    currentElm.AppendChild(xmlStack.Peek());
-                    break;
-                  case TokenType.HTMLOP_ELEMENT_END:
-                    FlushOutput(sb, currentElm);
-                    xmlStack.Pop();
-                    break;
-                  case TokenType.HTMLOP_ATTR_END:
-                    XmlAttribute attr = currentElm.OwnerDocument.CreateAttribute(ht.AttributeName);
-                    attr.Value = sb.ToString();
-                    currentElm.Attributes.Append(attr);
-                    sb.Remove(0, sb.Length);
-                    break;
-                  case TokenType.HTMLOP_TEXT:
-                    sb.Append(ht.Text);
-                    break;
-                }
-              } else {
-                sb.Append(ot.Value);
-                i = ot.Index;
-              }
-              break;
-          }
-        }
-      } finally {
-        evalCount = (evalCount + 1) & 0xFFFF;
-      }
-      if (this.Options.OutputXml) {
-        FlushOutput(sb, xmlStack.Peek());
-        return xmlStack.Peek();
-      }
-      return Regex.Replace(sb.ToString(), @"^\s+(?=<)|(>)\s+(<|$)", m => m.Groups[1].Value + m.Groups[2].Value);
     }
 
     public PipeFunction ResolveFunction(string name) {
@@ -216,11 +121,80 @@ namespace Codeless.WaterpipeSharp.Internal {
       return returnValue;
     }
 
-    private static void FlushOutput(StringBuilder sb, XmlElement currentElm) {
-      if (sb.Length > 0) {
-        currentElm.InnerText = sb.ToString();
-        sb.Remove(0, sb.Length);
+    private object Evaluate() {
+      EcmaValue result = default(EcmaValue);
+      OutputMode outputMode = this.Options.OutputRawValue ? OutputMode.Undecided : OutputMode.String;
+      StringBuilder sb = new StringBuilder();
+      try {
+        int i = 0;
+        int e = tokens.Count;
+        string ws = "";
+        while (i < e) {
+          Token t = tokens[i++];
+          switch (t.Type) {
+            case TokenType.OP_EVAL:
+              EvaluateToken et = (EvaluateToken)t;
+              int prevCount = evalCount;
+              result = et.Expression.Evaluate(this);
+              if (!result.IsNullOrUndefined) {
+                outputMode = outputMode != OutputMode.Undecided ? OutputMode.String : OutputMode.RawValue;
+                if (ws != null) {
+                  sb.Append(ws);
+                }
+                ws = null;
+                string str = Helper.String(result, v => Json.Stringify(v));
+                if (evalCount != prevCount || et.SuppressHtmlEncode) {
+                  sb.Append(str);
+                } else {
+                  sb.Append(Helper.Escape(str, false));
+                }
+              }
+              break;
+            case TokenType.OP_ITER:
+              IterationToken it = (IterationToken)t;
+              objStack.Push(new EvaluationStack(it.Expression.Evaluate(this)));
+              if (!objStack.Peek().MoveNext()) {
+                i = it.Index;
+              }
+              break;
+            case TokenType.OP_ITER_END:
+              IterationEndToken iet = (IterationEndToken)t;
+              if (!objStack.Peek().MoveNext()) {
+                Pop();
+              } else {
+                i = iet.Index;
+              }
+              break;
+            case TokenType.OP_TEST:
+              ConditionToken ct = (ConditionToken)t;
+              if (!(bool)ct.Expression.Evaluate(this) ^ ct.Negate) {
+                i = ct.Index;
+              }
+              break;
+            case TokenType.OP_JUMP:
+              i = ((BranchToken)t).Index;
+              break;
+            case TokenType.OP_SPACE:
+              ws = ws != "" ? ((SpaceToken)t).Value : null;
+              break;
+            default:
+              OutputToken ot = (OutputToken)t;
+              if (ws != null && !ot.TrimStart) {
+                sb.Append(ws);
+              }
+              sb.Append(ot.Value);
+              outputMode = OutputMode.String;
+              ws = ot.TrimEnd ? "" : null;
+              break;
+          }
+        }
+      } finally {
+        evalCount = (evalCount + (outputMode == OutputMode.String ? 1 : 0)) & 0xFFFF;
       }
+      if (outputMode == OutputMode.String) {
+        return sb.ToString();
+      }
+      return result;
     }
 
     private static PipeFunction DefaultNativeFunctionResolver(string name, GetNextPipeFunctionResolverDelegate getNext) {

@@ -9,7 +9,7 @@ namespace Codeless.WaterpipeSharp {
   /// <summary>
   /// Represents a collection of global values accessible regardless of the current context in the evaluation stack.
   /// </summary>
-  public class PipeGlobal : IDictionary<string, EcmaValue> {
+  public class PipeGlobal : IDictionary<string, EcmaValue>, IDictionary {
     private readonly Dictionary<string, object> dictionary = new Dictionary<string, object>();
     private readonly PipeGlobal parent;
 
@@ -117,6 +117,20 @@ namespace Codeless.WaterpipeSharp {
       get { return dictionary.Values.Select(v => new EcmaValue(v)).ToArray(); }
     }
 
+    public ICollection Keys => ((IDictionary)dictionary).Keys;
+
+    public ICollection Values => ((IDictionary)dictionary).Values;
+
+    public bool IsReadOnly => ((IDictionary)dictionary).IsReadOnly;
+
+    public bool IsFixedSize => ((IDictionary)dictionary).IsFixedSize;
+
+    public object SyncRoot => ((IDictionary)dictionary).SyncRoot;
+
+    public bool IsSynchronized => ((IDictionary)dictionary).IsSynchronized;
+
+    public object this[object key] { get => ((IDictionary)dictionary)[key]; set => ((IDictionary)dictionary)[key] = value; }
+
     void ICollection<KeyValuePair<string, EcmaValue>>.Add(KeyValuePair<string, EcmaValue> item) {
       dictionary.Add(item.Key, item.Value);
     }
@@ -139,6 +153,26 @@ namespace Codeless.WaterpipeSharp {
 
     IEnumerator IEnumerable.GetEnumerator() {
       return dictionary.GetEnumerator();
+    }
+
+    public bool Contains(object key) {
+      return ((IDictionary)dictionary).Contains(key);
+    }
+
+    public void Add(object key, object value) {
+      ((IDictionary)dictionary).Add(key, value);
+    }
+
+    public IDictionaryEnumerator GetEnumerator() {
+      return ((IDictionary)dictionary).GetEnumerator();
+    }
+
+    public void Remove(object key) {
+      ((IDictionary)dictionary).Remove(key);
+    }
+
+    public void CopyTo(Array array, int index) {
+      ((IDictionary)dictionary).CopyTo(array, index);
     }
     #endregion
   }

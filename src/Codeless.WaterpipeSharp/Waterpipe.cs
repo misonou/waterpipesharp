@@ -47,21 +47,7 @@ namespace Codeless.WaterpipeSharp {
     /// <returns></returns>
     public static string Evaluate(string template, object value, EvaluateOptions options) {
       PipeExecutionException[] exceptions;
-      object result = EvaluationContext.Evaluate(template, new EcmaValue(value), options, out exceptions);
-      if (options.OutputXml) {
-        return ((XmlNode)result).OuterXml;
-      }
-      return result.ToString();
-    }
-
-    /// <summary>
-    /// Evaluates the template against the specified value.
-    /// </summary>
-    /// <param name="template">A string that represents a valid waterpipe template.</param>
-    /// <param name="value">An object defining the root context.</param>
-    /// <returns></returns>
-    public static XmlDocument EvaluateAsXml(string template, object value) {
-      return EvaluateAsXml(template, value, new EvaluateOptions());
+      return Evaluate(template, value, options, out exceptions);
     }
 
     /// <summary>
@@ -70,13 +56,25 @@ namespace Codeless.WaterpipeSharp {
     /// <param name="template">A string that represents a valid waterpipe template.</param>
     /// <param name="value">An object defining the root context.</param>
     /// <param name="options">Options that alter rendering behaviors.</param>
+    /// <param name="exceptions"></param>
     /// <returns></returns>
-    public static XmlDocument EvaluateAsXml(string template, object value, EvaluateOptions options) {
-      Guard.ArgumentNotNull(options, "options");
+    public static string Evaluate(string template, object value, EvaluateOptions options, out PipeExecutionException[] exceptions) {
+      object result = EvaluationContext.Evaluate(template, new EcmaValue(value), options, out exceptions);
+      return result.ToString();
+    }
+
+    public static object EvaluateSingle(string template, object value) {
+      return EvaluateSingle(template, value, new EvaluateOptions());
+    }
+
+    public static object EvaluateSingle(string template, object value, EvaluateOptions options) {
       PipeExecutionException[] exceptions;
-      options.OutputXml = true;
-      XmlNode result = (XmlNode)EvaluationContext.Evaluate(template, new EcmaValue(value), options, out exceptions);
-      return result.OwnerDocument;
+      return EvaluateSingle(template, value, options, out exceptions);
+    }
+
+    public static object EvaluateSingle(string template, object value, EvaluateOptions options, out PipeExecutionException[] exceptions) {
+      options.OutputRawValue = true;
+      return EvaluationContext.Evaluate("{{" + template + "}}", new EcmaValue(value), options, out exceptions);
     }
 
     /// <summary>

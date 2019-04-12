@@ -119,6 +119,7 @@
     <Compile Include="Internal\EvaluationContext.cs" />
     <Compile Include="Internal\EvaluationStack.cs" />
     <Compile Include="Internal\Guard.cs" />
+    <Compile Include="Internal\Helper.cs" />
     <Compile Include="Internal\ObjectPath.cs" />
     <Compile Include="Internal\Pipe.cs" />
     <Compile Include="Internal\PipeArgument.cs" />

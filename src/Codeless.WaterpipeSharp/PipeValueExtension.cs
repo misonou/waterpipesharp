@@ -9,38 +9,41 @@ using System.Text.RegularExpressions;
 
 namespace Codeless.WaterpipeSharp {
   public static class PipeValueExtension {
-    public static EcmaValue Where(this EcmaValue value, PipeLambda fn) {
+    public static EcmaValue Where(this EcmaValue value, PipeContext context, PipeLambda fn) {
+      Guard.ArgumentNotNull(context, "context");
       Guard.ArgumentNotNull(fn, "fn");
       PipeValueObjectBuilder collection = new PipeValueObjectBuilder(value.IsArrayLike);
       foreach (EcmaPropertyEntry item in value.EnumerateEntries()) {
-        if ((bool)fn.Invoke(item)) {
+        if ((bool)fn.Invoke(context, item)) {
           collection.Add(item.Value, item.Key.ToString());
         }
       }
       return collection;
     }
 
-    public static EcmaValue Map(this EcmaValue value, PipeLambda fn) {
+    public static EcmaValue Map(this EcmaValue value, PipeContext context, PipeLambda fn) {
+      Guard.ArgumentNotNull(context, "context");
       Guard.ArgumentNotNull(fn, "fn");
       PipeValueObjectBuilder collection = new PipeValueObjectBuilder(value.IsArrayLike);
       foreach (EcmaPropertyEntry item in value.EnumerateEntries()) {
-        collection.Add(fn.Invoke(item), item.Key.ToString());
+        collection.Add(fn.Invoke(context, item), item.Key.ToString());
       }
       return collection;
     }
 
-    public static EcmaValue First(this EcmaValue value, PipeLambda fn) {
-      return First(value, fn, false, false);
+    public static EcmaValue First(this EcmaValue value, PipeContext context, PipeLambda fn) {
+      return First(value, context, fn, false, false);
     }
 
-    public static EcmaValue First(this EcmaValue value, PipeLambda fn, bool returnBoolean) {
-      return First(value, fn, returnBoolean, false);
+    public static EcmaValue First(this EcmaValue value, PipeContext context, PipeLambda fn, bool returnBoolean) {
+      return First(value, context, fn, returnBoolean, false);
     }
 
-    public static EcmaValue First(this EcmaValue value, PipeLambda fn, bool returnBoolean, bool negate) {
+    public static EcmaValue First(this EcmaValue value, PipeContext context, PipeLambda fn, bool returnBoolean, bool negate) {
+      Guard.ArgumentNotNull(context, "context");
       Guard.ArgumentNotNull(fn, "fn");
       foreach (EcmaPropertyEntry item in value.EnumerateEntries()) {
-        if (negate ^ (bool)fn.Invoke(item)) {
+        if (negate ^ (bool)fn.Invoke(context, item)) {
           return returnBoolean ? true : item.Value;
         }
       }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -10,11 +11,8 @@ namespace Codeless.WaterpipeSharp.Internal {
     OP_ITER_END = 3,
     OP_ITER = 4,
     OP_JUMP = 5,
-    HTMLOP_ELEMENT_START = 6,
-    HTMLOP_ELEMENT_END = 7,
-    HTMLOP_ATTR_END = 8,
-    HTMLOP_ATTR_START = 9,
-    HTMLOP_TEXT = 10,
+    OP_TEXT = 6,
+    OP_SPACE = 7,
   }
 
   internal abstract class Token {
@@ -25,12 +23,14 @@ namespace Codeless.WaterpipeSharp.Internal {
     public int Index { get; set; }
   }
 
+  [DebuggerDisplay("@jump {Index}")]
   internal class BranchToken : ControlToken {
     public override TokenType Type {
       get { return TokenType.OP_JUMP; }
     }
   }
 
+  [DebuggerDisplay("@if {Expression.TextValue} [@jump {Index}]")]
   internal class ConditionToken : ControlToken {
     public ConditionToken(Pipe pipe, bool negate) {
       Guard.ArgumentNotNull(pipe, "pipe");
@@ -46,6 +46,7 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
   }
 
+  [DebuggerDisplay("@foreach {Expression.TextValue}")]
   internal class IterationToken : ControlToken {
     public IterationToken(Pipe pipe) {
       Guard.ArgumentNotNull(pipe, "pipe");
@@ -59,6 +60,7 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
   }
 
+  [DebuggerDisplay("@endforeach")]
   internal class IterationEndToken : ControlToken {
     public IterationEndToken(int index) {
       this.Index = index;
@@ -69,6 +71,7 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
   }
 
+  [DebuggerDisplay("@eval {Expression.TextValue}")]
   internal class EvaluateToken : Token {
     public EvaluateToken(Pipe pipe, bool suppressEncode) {
       Guard.ArgumentNotNull(pipe, "pipe");
@@ -84,27 +87,22 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
   }
 
-  internal class OutputToken : Token {
-    public OutputToken(TokenType type) {
-      this.Type = type;
-    }
-
-    public override TokenType Type { get; }
-    public int Index { get; set; }
-    public string Value { get; internal set; }
+  [DebuggerDisplay("@space")]
+  internal class SpaceToken : Token {
+    public override TokenType Type => TokenType.OP_SPACE;
+    public string Value => " ";
   }
 
-  internal class HtmlOutputToken : OutputToken {
-    public HtmlOutputToken(TokenType type)
-      : base(type) { }
-
+  [DebuggerDisplay("@out '{Value}'")]
+  internal class OutputToken : Token {
+    public override TokenType Type => TokenType.OP_TEXT;
+    public int Index { get; set; }
+    public string Value { get; set; }
+    public bool TrimStart { get; set; }
+    public bool TrimEnd { get; set; }
     public string TagName { get; set; }
-    public bool TagOpened { get; set; }
-    public Dictionary<string, HtmlOutputToken> Attributes { get; } = new Dictionary<string, HtmlOutputToken>();
-
+    public bool? TagOpened { get; set; }
     public string AttributeName { get; set; }
-
-    public string Text { get; set; }
-    public List<int> Offsets { get; set; }
+    public bool MuteTagEnd { get; set; }
   }
 }

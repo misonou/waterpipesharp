@@ -1,4 +1,5 @@
 ﻿using Codeless.Ecma;
+using Codeless.Ecma.Runtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -125,8 +126,8 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue Like(EcmaValue str, EcmaValue regex) {
-      EcmaRegExp re;
-      return EcmaRegExp.TryParse(Helper.String(regex), out re) && re.Test(Helper.String(str));
+      EcmaRegExp re = Helper.ParseRegExp(Helper.String(regex));
+      return re != null ? re.Test(Helper.String(str)) : false;
     }
 
     [BuiltInPipeFunctionAlias("!")]
@@ -177,11 +178,10 @@ namespace Codeless.WaterpipeSharp.Internal {
       if (fn == null) {
         replacement = Helper.String(context.TakeArgument());
       }
-
-      EcmaRegExp re;
-      if (EcmaRegExp.TryParse(needle, out re)) {
+      EcmaRegExp re = Helper.ParseRegExp(needle);
+      if (re != null) {
         if (fn != null) {
-          return re.Replace(Helper.String(context.Value), m => fn.Invoke(context, m));
+          return re.Replace(Helper.String(context.Value), m => fn.Invoke(context, m.ToValue()).ToString());
         }
         return re.Replace(Helper.String(context.Value), replacement);
       }
@@ -275,7 +275,7 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     public static EcmaValue Repeat(EcmaValue count, EcmaValue str) {
       string strStr = Helper.String(str);
-      int intCount = (int)(+count).Or(0);
+      int intCount = (int)(+count || (EcmaValue)0);
       StringBuilder sb = new StringBuilder(strStr.Length * intCount);
       for (int i = 0; i < intCount; i++) {
         sb.Append(strStr);
@@ -311,32 +311,32 @@ namespace Codeless.WaterpipeSharp.Internal {
     #region Math functions
     [BuiltInPipeFunctionAlias("+")]
     public static EcmaValue Plus(EcmaValue a, EcmaValue b) {
-      return (+a).Or(0) + (+b).Or(0);
+      return (+a || (EcmaValue)0) + (+b || (EcmaValue)0);
     }
 
     [BuiltInPipeFunctionAlias("-")]
     public static EcmaValue Minus(EcmaValue a, EcmaValue b) {
-      return (+a).Or(0) - (+b).Or(0);
+      return (+a || (EcmaValue)0) - (+b || (EcmaValue)0);
     }
 
     [BuiltInPipeFunctionAlias("*")]
     public static EcmaValue Multiply(EcmaValue a, EcmaValue b) {
-      return (+a).Or(0) * (+b).Or(0);
+      return (+a || (EcmaValue)0) * (+b || (EcmaValue)0);
     }
 
     [BuiltInPipeFunctionAlias("/")]
     public static EcmaValue Divide(EcmaValue a, EcmaValue b) {
-      return (+a).Or(0) / (+b).Or(0);
+      return (+a || (EcmaValue)0) / (+b || (EcmaValue)0);
     }
 
     [BuiltInPipeFunctionAlias("%")]
     public static EcmaValue Mod(EcmaValue a, EcmaValue b) {
-      return (+a).Or(0) % (+b).Or(0);
+      return (+a || (EcmaValue)0) % (+b || (EcmaValue)0);
     }
 
     [BuiltInPipeFunctionAlias("^")]
     public static EcmaValue Pow(EcmaValue a, EcmaValue b) {
-      return Math.Pow((double)(+a).Or(0), (double)(+b).Or(0));
+      return EcmaMath.Pow(+a || (EcmaValue)0, +b || (EcmaValue)0);
     }
 
     public static EcmaValue Abs(EcmaValue a) {
@@ -344,11 +344,11 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue Max(EcmaValue a, EcmaValue b) {
-      return Math.Min((double)(+a).Or(0), (double)(+b).Or(0));
+      return EcmaMath.Min(+a || (EcmaValue)0, +b || (EcmaValue)0);
     }
 
     public static EcmaValue Min(EcmaValue a, EcmaValue b) {
-      return Math.Max((double)(+a).Or(0), (double)(+b).Or(0));
+      return EcmaMath.Max(+a || (EcmaValue)0, +b || (EcmaValue)0);
     }
 
     public static EcmaValue Round(EcmaValue value) {
@@ -373,17 +373,20 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static EcmaValue Keys(EcmaValue obj) {
+      if (obj.IsNullOrUndefined) {
+        return new EcmaValue(new EcmaArray());
+      }
       if (obj.IsArrayLike) {
         return new EcmaValue(Enumerable.Range(0, (int)obj["length"]).ToArray());
       }
-      List<string> keys = new List<string>(obj.EnumerateKeys().Select(v => v.ToString()));
+      List<string> keys = new List<string>(obj.ToObject().GetEnumerablePropertyKeys().Select(v => v.ToString()));
       return new EcmaValue(keys);
     }
 
     [BuiltInPipeFunctionAlias("..")]
     public static EcmaValue To(EcmaValue a, EcmaValue b) {
-      a = (+a).Or(0);
-      b = (+b).Or(0);
+      a = +a || (EcmaValue)0;
+      b = +b || (EcmaValue)0;
       int step = a < b ? 1 : -1;
       List<object> list = new List<object>();
       for (; (a - b) / step < 0; a += step) {
@@ -412,8 +415,8 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     public static EcmaValue Slice(EcmaValue value, EcmaValue a, EcmaValue b) {
       EcmaValue[] arr = value.ToArray();
-      int a1 = (int)(+a).Or(0);
-      int b1 = (int)(+b).Or(0);
+      int a1 = (int)(+a || (EcmaValue)0);
+      int b1 = (int)(+b || (EcmaValue)0);
       a1 = a1 >= 0 ? a1 : Math.Max(0, arr.Length - a1);
       return new PipeValueObjectBuilder(arr.Skip(a1).Take(b1));
     }
@@ -456,11 +459,11 @@ namespace Codeless.WaterpipeSharp.Internal {
           fn = (c, a, b) => a;
         }
       }
-      foreach (EcmaPropertyEntry item in context.Value.EnumerateEntries()) {
+      foreach (EcmaPropertyKey propertyKey in context.Value) {
         if (result != EcmaValue.Undefined) {
-          result = result + fn.Invoke(context, item);
+          result = result + fn.Invoke(context, context.Value[propertyKey], propertyKey.ToValue());
         } else {
-          result = fn.Invoke(context, item);
+          result = fn.Invoke(context, context.Value[propertyKey], propertyKey.ToValue());
         }
       }
       return result;
@@ -470,8 +473,8 @@ namespace Codeless.WaterpipeSharp.Internal {
       List<object> array = new List<object>();
       PipeLambda fn = Helper.DetectKeyLambda(context, context.Value);
       int i = 0;
-      foreach (EcmaPropertyEntry item in context.Value.EnumerateEntries()) {
-        array.Add(new object[] { fn.Invoke(context, item), ++i, item.Key.ToString() });
+      foreach (EcmaPropertyKey propertyKey in context.Value) {
+        array.Add(new object[] { fn.Invoke(context, context.Value[propertyKey], propertyKey.ToValue()), ++i, propertyKey.ToString() });
       }
       array.Sort(PipeValueComparer.Default);
 
@@ -487,11 +490,11 @@ namespace Codeless.WaterpipeSharp.Internal {
       if (value.IsArrayLike) {
         Hashtable ht = new Hashtable();
         List<EcmaValue> result = new List<EcmaValue>();
-        foreach (EcmaValue item in value.EnumerateValues()) {
-          string key = Helper.String(item);
+        foreach (EcmaPropertyKey propertyKey in value) {
+          string key = Helper.String(value[propertyKey]);
           if (!ht.ContainsKey(key)) {
             ht.Add(key, null);
-            result.Add(item);
+            result.Add(value[propertyKey]);
           }
         }
         return new EcmaValue(result);
@@ -503,12 +506,12 @@ namespace Codeless.WaterpipeSharp.Internal {
       Dictionary<string, PipeValueObjectBuilder> dict = new Dictionary<string, PipeValueObjectBuilder>();
       PipeLambda fn = Helper.DetectKeyLambda(context, context.Value);
 
-      foreach (EcmaPropertyEntry entry in context.Value.EnumerateEntries()) {
-        string key = Helper.String(fn.Invoke(context, entry));
+      foreach (EcmaPropertyKey propertyKey in context.Value) {
+        string key = Helper.String(fn.Invoke(context, context.Value[propertyKey], propertyKey.ToValue()));
         if (!dict.ContainsKey(key)) {
           dict[key] = new PipeValueObjectBuilder(context.Value.IsArrayLike);
         }
-        dict[key].Add(entry.Value, entry.Key.ToString());
+        dict[key].Add(context.Value[propertyKey], propertyKey.ToString());
       }
       PipeValueObjectBuilder result = new PipeValueObjectBuilder(false);
       foreach (KeyValuePair<string, PipeValueObjectBuilder> e in dict) {
@@ -555,16 +558,16 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     private static void BuildQuery(NameValueCollection nv, EcmaValue obj, string prefix) {
       if (prefix != null && obj.IsArrayLike) {
-        foreach (EcmaPropertyEntry item in obj.EnumerateEntries()) {
+        foreach (EcmaPropertyKey propertyKey in obj) {
           if (Regex.IsMatch(prefix, @"\[\]$")) {
-            nv.Add(prefix, item.Value.ToString());
+            nv.Add(prefix, obj[propertyKey].ToString());
           } else {
-            BuildQuery(nv, item.Value, prefix + "[" + (item.Value.Type == EcmaValueType.Object && (bool)item.Value ? item.Key : "") + "]");
+            BuildQuery(nv, obj[propertyKey], prefix + "[" + (obj[propertyKey].Type == EcmaValueType.Object && (bool)obj[propertyKey] ? propertyKey.ToString() : "") + "]");
           }
         }
       } else if (obj.Type == EcmaValueType.Object) {
-        foreach (EcmaPropertyEntry item in obj.EnumerateEntries()) {
-          BuildQuery(nv, item.Value, prefix != null ? prefix + "[" + item.Key.ToString() + "]" : item.Key.ToString());
+        foreach (EcmaPropertyKey propertyKey in obj) {
+          BuildQuery(nv, obj[propertyKey], prefix != null ? prefix + "[" + propertyKey.ToString() + "]" : propertyKey.ToString());
         }
       } else {
         nv.Add(prefix, obj.ToString());

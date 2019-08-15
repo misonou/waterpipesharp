@@ -21,7 +21,7 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     public static string String(EcmaValue value, Func<EcmaValue, string> stringify = null) {
-      return !Evallable(value) || value.IsNaN || value.TypeOf == "function" ? "" : value.Type == EcmaValueType.String || stringify == null ? (string)value : stringify(value);
+      return !Evallable(value) || value.IsNaN || Global.TypeOf(value) == "function" ? "" : value.Type == EcmaValueType.String || stringify == null ? (string)value : stringify(value);
     }
 
     public static PipeLambda DetectKeyLambda(PipeContext context, EcmaValue arr) {
@@ -51,10 +51,13 @@ namespace Codeless.WaterpipeSharp.Internal {
       if (value.IsNullOrUndefined || value[name].IsCallable) {
         return false;
       }
-      if (value.Type != EcmaValueType.Object) {
-        return value[name].Type != EcmaValueType.Undefined;
+      if (EcmaArray.IsArray(value) && Int32.TryParse(name.Name, out int _)) {
+        return true;
       }
-      return value.HasOwnProperty(name) || (EcmaArray.IsArray(value) && Int32.TryParse(name.Name, out int _));
+      if (value.HasProperty(name)) {
+        return Global.TypeOf(value[name]) != "function";
+      }
+      return false;
     }
 
     private static readonly Regex reEscape = new Regex("[\"'&<>]");
@@ -71,6 +74,18 @@ namespace Codeless.WaterpipeSharp.Internal {
         }
         return m.Value;
       });
+    }
+
+    public static EcmaRegExp ParseRegExp(string needle) {
+      try {
+        if (needle.Length > 0 && needle[0] == '/') {
+          int lastSlash = needle.LastIndexOf('/');
+          if (lastSlash > 1) {
+            return EcmaRegExp.Parse(needle.Substring(1, lastSlash - 1), needle.Substring(lastSlash + 1));
+          }
+        }
+      } catch { }
+      return null;
     }
   }
 }

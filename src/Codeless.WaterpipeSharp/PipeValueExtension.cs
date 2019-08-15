@@ -13,9 +13,9 @@ namespace Codeless.WaterpipeSharp {
       Guard.ArgumentNotNull(context, "context");
       Guard.ArgumentNotNull(fn, "fn");
       PipeValueObjectBuilder collection = new PipeValueObjectBuilder(value.IsArrayLike);
-      foreach (EcmaPropertyEntry item in value.EnumerateEntries()) {
-        if ((bool)fn.Invoke(context, item)) {
-          collection.Add(item.Value, item.Key.ToString());
+      foreach (EcmaPropertyKey propertyKey in value) {
+        if ((bool)fn.Invoke(context, value[propertyKey], propertyKey.ToValue())) {
+          collection.Add(value[propertyKey], propertyKey.ToString());
         }
       }
       return collection;
@@ -25,8 +25,8 @@ namespace Codeless.WaterpipeSharp {
       Guard.ArgumentNotNull(context, "context");
       Guard.ArgumentNotNull(fn, "fn");
       PipeValueObjectBuilder collection = new PipeValueObjectBuilder(value.IsArrayLike);
-      foreach (EcmaPropertyEntry item in value.EnumerateEntries()) {
-        collection.Add(fn.Invoke(context, item), item.Key.ToString());
+      foreach (EcmaPropertyKey propertyKey in value) {
+        collection.Add(fn.Invoke(context, value[propertyKey], propertyKey.ToValue()), propertyKey.ToString());
       }
       return collection;
     }
@@ -42,9 +42,9 @@ namespace Codeless.WaterpipeSharp {
     public static EcmaValue First(this EcmaValue value, PipeContext context, PipeLambda fn, bool returnBoolean, bool negate) {
       Guard.ArgumentNotNull(context, "context");
       Guard.ArgumentNotNull(fn, "fn");
-      foreach (EcmaPropertyEntry item in value.EnumerateEntries()) {
-        if (negate ^ (bool)fn.Invoke(context, item)) {
-          return returnBoolean ? true : item.Value;
+      foreach (EcmaPropertyKey propertyKey in value) {
+        if (negate ^ (bool)fn.Invoke(context, value[propertyKey], propertyKey.ToValue())) {
+          return returnBoolean ? true : value[propertyKey];
         }
       }
       return returnBoolean ? false : EcmaValue.Undefined;
@@ -53,12 +53,15 @@ namespace Codeless.WaterpipeSharp {
     public static EcmaValue Flatten(this EcmaValue src) {
       if (src.IsArrayLike) {
         PipeValueObjectBuilder dst = new PipeValueObjectBuilder(true);
-        foreach (EcmaValue value in src.EnumerateValues()) {
+        foreach (EcmaPropertyKey propertyKey in src) {
+          EcmaValue value = src[propertyKey];
           if (value.IsArrayLike) {
             EcmaValue fvalue = Flatten(value);
-            foreach (EcmaValue o in fvalue.EnumerateValues()) {
-              if (o != EcmaValue.Null && o != EcmaValue.Undefined)
+            foreach (EcmaPropertyKey propertyKey2 in fvalue) {
+              EcmaValue o = fvalue[propertyKey2];
+              if (o != EcmaValue.Null && o != EcmaValue.Undefined) {
                 dst.Add(o, "");
+              }
             }
           } else if (value != EcmaValue.Null && value != EcmaValue.Undefined) {
             dst.Add(value, "");
@@ -70,7 +73,7 @@ namespace Codeless.WaterpipeSharp {
     }
 
     public static EcmaValue[] ToArray(this EcmaValue arr) {
-      return arr.IsArrayLike ? arr.EnumerateValues().ToArray() : new[] { arr };
+      return arr.IsArrayLike ? EcmaValueUtility.CreateListFromArrayLike(arr) : new[] { arr };
     }
   }
 }

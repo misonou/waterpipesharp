@@ -158,7 +158,7 @@ namespace Codeless.WaterpipeSharp.Internal {
             while (htmlStack.Peek().TagName != null && VoidTags.Contains(htmlStack.Peek().TagName.ToLower()) && TryPopHtmlStack()) ;
             current = htmlStack.Peek();
             if (m.Groups[1].Success && m.Groups[1].Value.Length > 0) {
-              if (current.TagName != m.Groups[2].Value || htmlStackCount == 0 || htmlStack.Count <= htmlStackCount) {
+              if (current.TagName != m.Groups[2].Value || htmlStack.Count <= Math.Max(controlStack.Peek().HtmlStackCount, 1)) {
                 current.MuteTagEnd = true;
                 current.TagOpened = null;
               } else {

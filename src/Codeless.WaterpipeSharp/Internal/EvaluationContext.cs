@@ -17,7 +17,6 @@ namespace Codeless.WaterpipeSharp.Internal {
     private static readonly List<PipeFunctionResolver> resolvers = new List<PipeFunctionResolver>() { DefaultNativeFunctionResolver };
 
     private readonly List<PipeExecutionException> exceptions = new List<PipeExecutionException>();
-    private readonly Stack<XmlElement> xmlStack = new Stack<XmlElement>();
     private readonly Stack<EvaluationStack> objStack = new Stack<EvaluationStack>();
     private readonly TokenList tokens;
     [ThreadStatic]
@@ -142,7 +141,7 @@ namespace Codeless.WaterpipeSharp.Internal {
                   sb.Append(ws);
                 }
                 ws = null;
-                string str = Helper.String(result, v => Json.Stringify(v));
+                string str = Helper.String(result, Json.Stringify);
                 if (evalCount != prevCount || et.SuppressHtmlEncode) {
                   sb.Append(str);
                 } else {

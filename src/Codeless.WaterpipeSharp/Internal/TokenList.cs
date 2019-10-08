@@ -41,7 +41,7 @@ namespace Codeless.WaterpipeSharp.Internal {
 
     private TokenList(string inputString) {
       Guard.ArgumentNotNull(inputString, "inputString");
-      this.inputString = inputString;
+      this.inputString = inputString.Trim();
       Parse();
     }
 
@@ -218,14 +218,14 @@ namespace Codeless.WaterpipeSharp.Internal {
     private void AppendTextContent(string str, bool stripWS) {
       OutputToken current = htmlStack.Peek();
       if (stripWS || current.AttributeName != null || current.TagOpened == true) {
-        str = stripWS ? str : Helper.Escape(Regex.Replace(str, "\\s+", htmlStack.Count > 1 && current.TagOpened == true ? " " : ""), true);
-        if (str != "") {
-          OutputToken last1 = this.Count > 1 ? this[this.Count - 1] as OutputToken : null;
-          OutputToken last2 = this.Count > 2 ? this[this.Count - 2] as OutputToken : null;
-          if (this.Count > htmlStartIndex && last1 != null) {
+        str = stripWS ? str : Helper.Escape(Regex.Replace(str, "\\s+", current.TagOpened == true ? " " : ""), true);
+        if (str != "" && (htmlStack.Count > 1 || str != " ")) {
+          OutputTokenBase last1 = this.Count >= 1 ? this[this.Count - 1] as OutputTokenBase : null;
+          OutputTokenBase last2 = this.Count >= 2 ? this[this.Count - 2] as OutputTokenBase : null;
+          if (this.Count > htmlStartIndex && last1 is OutputToken) {
             last1.Value += str;
-          } else if (this.Count > htmlStartIndex + 1 && last2 != null) {
-            last2.Value += (stripWS || last2.TrimEnd || last1 == null ? "" : last1.Value) + str;
+          } else if (this.Count > htmlStartIndex + 1 && last2 is OutputToken last2t) {
+            last2.Value += (stripWS || last2t.TrimEnd || last1 == null ? "" : last1.Value) + str;
             Remove(last1);
           } else {
             Add(new OutputToken { Value = str, TrimStart = stripWS });

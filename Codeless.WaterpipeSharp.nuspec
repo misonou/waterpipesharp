@@ -2,15 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>Codeless.WaterpipeSharp</id>
-        <version>1.0.0-beta</version>
+        <version>2.2.0</version>
         <authors>misonou</authors>
-        <projectUrl>https://github.com/misonou/codeless-waterpipe</projectUrl>
+        <projectUrl>https://github.com/misonou/waterpipesharp</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Dynamic data evaluation and template rendering.</description>
         <copyright>MIT</copyright>
         <language>en-US</language>
         <dependencies>
-            <dependency id="Codeless.Ecma" version="0.1.0-alpha" />
+            <dependency id="Codeless.Ecma" version="0.1.0" />
         </dependencies>
     </metadata>
     <files>

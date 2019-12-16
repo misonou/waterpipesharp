@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Web.UI;
 using System.Xml;
 
 namespace Codeless.WaterpipeSharp {
@@ -226,7 +225,13 @@ namespace Codeless.WaterpipeSharp {
 
       public override EcmaValue Invoke(PipeContext context, EcmaValue[] args) {
         PipeExecutionException[] exceptions;
-        object result = EvaluationContext.Evaluate(tokens, args.ElementAtOrDefault(0), new EvaluateOptions(context.EvaluationContext.Options, context.Globals) { OutputRawValue = true }, out exceptions);
+        EvaluateOptions options = new EvaluateOptions(context.EvaluationContext.Options, context.Globals) {
+          OutputRawValue = true,
+          TrimStart = true,
+          IndentPadding = 0,
+          IndentPaddingString = null
+        };
+        object result = EvaluationContext.Evaluate(tokens, args.ElementAtOrDefault(0), options, out exceptions);
         foreach (PipeExecutionException ex in exceptions) {
           context.EvaluationContext.AddException(ex);
         }

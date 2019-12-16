@@ -21,6 +21,8 @@ namespace Codeless.WaterpipeSharp.Internal {
     private readonly TokenList tokens;
     [ThreadStatic]
     private static int evalCount;
+    [ThreadStatic]
+    private static Stack<EvaluateOptions> execStack;
 
     private enum OutputMode { Undecided, String, RawValue }
 
@@ -40,10 +42,27 @@ namespace Codeless.WaterpipeSharp.Internal {
     private EvaluationContext(TokenList tokens, EcmaValue data, EvaluateOptions options) {
       Guard.ArgumentNotNull(tokens, "tokens");
       Guard.ArgumentNotNull(options, "options");
+      options = options.Clone();
       this.Globals = new PipeGlobal(options.Globals);
       this.Options = options;
       this.tokens = tokens;
       objStack.Push(new EvaluationStack(data));
+      if (execStack == null) {
+        execStack = new Stack<EvaluateOptions>();
+      }
+      if (options.IndentString == null && options.Indent > 0) {
+        options.IndentString = Helper.Repeat(" ", options.Indent);
+      }
+      if (execStack.Count > 0) {
+        var prevOptions = execStack.Peek();
+        if (options.IndentPaddingString == null && (prevOptions.IndentLevel > 0 || prevOptions.IndentPaddingString != null)) {
+          options.IndentPaddingString = Helper.Indent(prevOptions.IndentString, prevOptions.IndentLevel, prevOptions.IndentPaddingString);
+        }
+      }
+      if (options.IndentPaddingString == null && options.IndentPadding > 0) {
+        options.IndentPaddingString = Helper.Repeat(" ", options.IndentPadding);
+      }
+      execStack.Push(options);
     }
 
     public EvaluateOptions Options { get; }
@@ -121,15 +140,21 @@ namespace Codeless.WaterpipeSharp.Internal {
     }
 
     private object Evaluate() {
-      EcmaValue result = default(EcmaValue);
+      EcmaValue result = default;
       OutputMode outputMode = this.Options.OutputRawValue ? OutputMode.Undecided : OutputMode.String;
       StringBuilder sb = new StringBuilder();
+      string lastAppendStr = null;
+      Action<string> append = s => {
+        sb.Append(s);
+        lastAppendStr = s;
+      };
       try {
         int i = 0;
         int e = tokens.Count;
         string ws = "";
         while (i < e) {
           Token t = tokens[i++];
+          Options.IndentLevel = t.Indent.Value;
           switch (t.Type) {
             case TokenType.OP_EVAL:
               EvaluateToken et = (EvaluateToken)t;
@@ -138,14 +163,14 @@ namespace Codeless.WaterpipeSharp.Internal {
               if (!result.IsNullOrUndefined) {
                 outputMode = outputMode != OutputMode.Undecided ? OutputMode.String : OutputMode.RawValue;
                 if (ws != null) {
-                  sb.Append(ws);
+                  append(ws);
                 }
                 ws = null;
-                string str = Helper.String(result, Json.Stringify);
+                string str = Helper.String(result, Helper.Json);
                 if (evalCount != prevCount || et.SuppressHtmlEncode) {
-                  sb.Append(str);
+                  append(str);
                 } else {
-                  sb.Append(Helper.Escape(str, false));
+                  append(Helper.Escape(str, false));
                 }
               }
               break;
@@ -174,14 +199,26 @@ namespace Codeless.WaterpipeSharp.Internal {
               i = ((BranchToken)t).Index;
               break;
             case TokenType.OP_SPACE:
-              ws = ws != "" ? ((SpaceToken)t).Value : null;
+              SpaceToken st = (SpaceToken)t;
+              if (ws == "") {
+                ws = null;
+              } else if (st.Value == "\r\n" && Options.IndentString != null) {
+                string k = "\r\n" + Helper.Indent(Options.IndentString, t.Indent.Value, Options.IndentPaddingString);
+                if (k.IndexOf(lastAppendStr) == 0) {
+                  sb.Remove(sb.Length - lastAppendStr.Length, lastAppendStr.Length);
+                }
+                append(k);
+                ws = null;
+              } else {
+                ws = st.Value;
+              }
               break;
             default:
               OutputToken ot = (OutputToken)t;
               if (ws != null && !ot.TrimStart) {
-                sb.Append(ws);
+                append(ws);
               }
-              sb.Append(ot.Value);
+              append(ot.Value);
               outputMode = OutputMode.String;
               ws = ot.TrimEnd ? "" : null;
               break;
@@ -189,8 +226,12 @@ namespace Codeless.WaterpipeSharp.Internal {
         }
       } finally {
         evalCount = (evalCount + (outputMode == OutputMode.String ? 1 : 0)) & 0xFFFF;
+        execStack.Pop();
       }
       if (outputMode == OutputMode.String) {
+        if ((Options.Indent > 0 || Options.IndentString != null) && Options.IndentPaddingString != null && !Options.TrimStart) {
+          sb.Insert(0, Options.IndentPaddingString);
+        }
         return sb.ToString();
       }
       return result;

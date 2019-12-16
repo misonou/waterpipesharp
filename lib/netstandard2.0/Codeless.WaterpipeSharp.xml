@@ -1,0 +1,314 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Codeless.WaterpipeSharp</name>
+    </assembly>
+    <members>
+        <member name="T:Codeless.WaterpipeSharp.EvaluateOptions">
+            <summary>
+            Specifies the behavior of template evaluation.
+            </summary>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.EvaluateOptions.#ctor">
+            <summary>
+            Instantiates an instance of the <see cref="T:Codeless.WaterpipeSharp.EvaluateOptions"/> with default options.
+            </summary>
+        </member>
+        <member name="P:Codeless.WaterpipeSharp.EvaluateOptions.Globals">
+            <summary>
+            Gets the collection of global values that is passed to the template evaluation.
+            </summary>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunction">
+            <summary>
+            An abstract class representing a pipe function that can be invoked with a given pipe context.
+            </summary>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Invoke(Codeless.WaterpipeSharp.PipeContext)">
+            <summary>
+            Invokes the pipe function with the specified context.
+            </summary>
+            <param name="context">Pipe context.</param>
+            <returns>Result of the pipe function.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(Codeless.WaterpipeSharp.PipeFunction.Variadic)">
+            <summary>
+            Creates a pipe function that takes arbitrary number of arguments or function arguments.
+            </summary>
+            <param name="fn">A delegate that encapsulates a method that match the signature of <see cref="T:Codeless.WaterpipeSharp.PipeFunction.Variadic"/>.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(Codeless.WaterpipeSharp.PipeFunction.Func0)">
+            <summary>
+            Creates a pipe function that takes no arguments from pipe.
+            </summary>
+            <param name="fn">A delegate that encapsulates a method that match the signature of <see cref="T:Codeless.WaterpipeSharp.PipeFunction.Func0"/>.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(Codeless.WaterpipeSharp.PipeFunction.Func1)">
+            <summary>
+            Creates a pipe function that takes one argument from pipe.
+            </summary>
+            <param name="fn">A delegate that encapsulates a method that match the signature of <see cref="T:Codeless.WaterpipeSharp.PipeFunction.Func1"/>.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(Codeless.WaterpipeSharp.PipeFunction.Func2)">
+            <summary>
+            Creates a pipe function that takes two arguments from pipe.
+            </summary>
+            <param name="fn">A delegate that encapsulates a method that match the signature of <see cref="T:Codeless.WaterpipeSharp.PipeFunction.Func2"/>.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(Codeless.WaterpipeSharp.PipeFunction.Func3)">
+            <summary>
+            Creates a pipe function that takes three arguments from pipe.
+            </summary>
+            <param name="fn">A delegate that encapsulates a method that match the signature of <see cref="T:Codeless.WaterpipeSharp.PipeFunction.Func3"/>.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(Codeless.WaterpipeSharp.PipeFunction.Func4)">
+            <summary>
+            Creates a pipe function that takes four arguments from pipe.
+            </summary>
+            <param name="fn">A delegate that encapsulates a method that match the signature of <see cref="T:Codeless.WaterpipeSharp.PipeFunction.Func4"/>.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(Codeless.WaterpipeSharp.PipeFunction.Func5)">
+            <summary>
+            Creates a pipe function that takes five arguments from pipe.
+            </summary>
+            <param name="fn">A delegate that encapsulates a method that match the signature of <see cref="T:Codeless.WaterpipeSharp.PipeFunction.Func5"/>.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(System.Reflection.MethodInfo)">
+            <summary>
+            Creates a pipe function.
+            </summary>
+            <param name="fn">A <see cref="T:System.Reflection.MethodInfo"/> instance representing a named or anonymous method.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeFunction.Create(System.String)">
+            <summary>
+            Creates a pipe function that evaluates the specified template on the piped value.
+            </summary>
+            <param name="template">A string that represents a valid waterpipe template.</param>
+            <returns>The constructed pipe function that can be invoked with a given pipe context.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunction.Variadic">
+            <summary>
+            Encapsulates a native method that takes arbitrary number of arguments or function arguments from pipe.
+            </summary>
+            <param name="context">Pipe context.</param>
+            <returns>Result of the pipe function.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunction.Func0">
+            <summary>
+            Encapsulates a native method that takes no arguments from pipe.
+            </summary>
+            <param name="value">Piped value from object path or previous pipe function.</param>
+            <returns>Result of the pipe function.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunction.Func1">
+            <summary>
+            Encapsulates a native method that takes one argument from pipe.
+            </summary>
+            <param name="value">Piped value from object path or previous pipe function.</param>
+            <param name="arg1">First argument from pipe.</param>
+            <returns>Result of the pipe function.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunction.Func2">
+            <summary>
+            Encapsulates a native method that takes two arguments from pipe.
+            </summary>
+            <param name="value">Piped value from object path or previous pipe function.</param>
+            <param name="arg1">First argument from pipe.</param>
+            <param name="arg2">Second argument from pipe.</param>
+            <returns>Result of the pipe function.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunction.Func3">
+            <summary>
+            Encapsulates a native method that takes three arguments from pipe.
+            </summary>
+            <param name="value">Piped value from object path or previous pipe function.</param>
+            <param name="arg1">First argument from pipe.</param>
+            <param name="arg2">Second argument from pipe.</param>
+            <param name="arg3">Third argument from pipe.</param>
+            <returns>Result of the pipe function.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunction.Func4">
+            <summary>
+            Encapsulates a native method that takes three arguments from pipe.
+            </summary>
+            <param name="value">Piped value from object path or previous pipe function.</param>
+            <param name="arg1">First argument from pipe.</param>
+            <param name="arg2">Second argument from pipe.</param>
+            <param name="arg3">Third argument from pipe.</param>
+            <param name="arg4">Forth argument from pipe.</param>
+            <returns>Result of the pipe function.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunction.Func5">
+            <summary>
+            Encapsulates a native method that takes three arguments from pipe.
+            </summary>
+            <param name="value">Piped value from object path or previous pipe function.</param>
+            <param name="arg1">First argument from pipe.</param>
+            <param name="arg2">Second argument from pipe.</param>
+            <param name="arg3">Third argument from pipe.</param>
+            <param name="arg4">Forth argument from pipe.</param>
+            <param name="arg5">Fifth argument from pipe.</param>
+            <returns>Result of the pipe function.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeGlobal">
+            <summary>
+            Represents a collection of global values accessible regardless of the current context in the evaluation stack.
+            </summary>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeGlobal.#ctor">
+            <summary>
+            Instantiate the <see cref="T:Codeless.WaterpipeSharp.PipeGlobal"/> class.
+            </summary>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeGlobal.#ctor(System.Collections.IDictionary)">
+            <summary>
+            Instantiate the <see cref="T:Codeless.WaterpipeSharp.PipeGlobal"/> class initialized with given entries.
+            Dictionary keys are converted to string values through <see cref="T:Codeless.Ecma.EcmaValue"/> string conversion.
+            If two distinct keys give the same string representation, exception will be thrown.
+            </summary>
+            <param name="ht"></param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.PipeGlobal.#ctor(Codeless.WaterpipeSharp.PipeGlobal)">
+            <summary>
+            Instantiate the <see cref="T:Codeless.WaterpipeSharp.PipeGlobal"/> class inheriting entries in another <see cref="T:Codeless.WaterpipeSharp.PipeGlobal"/> instance.
+            This newly created instance will expose the inherited entries but not modifying them.
+            Setting value with the same key that appears in the parent <see cref="T:Codeless.WaterpipeSharp.PipeGlobal"/>instance will mask that entry with the new value.
+            </summary>
+            <param name="copyFrom"></param>
+        </member>
+        <member name="P:Codeless.WaterpipeSharp.PipeGlobal.Item(System.String)">
+            <summary>
+            Gets or sets value associated with the given key.
+            If the given key is not present in the dictionary, <see cref="F:Codeless.Ecma.EcmaValue.Undefined"/> is returned.
+            </summary>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
+        <member name="P:Codeless.WaterpipeSharp.PipeGlobal.Count">
+            <summary>
+            Gets the number of entries contained including inherited entries if any.
+            </summary>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.PipeFunctionResolver">
+            <summary>
+            Encapsulates a method that resolves unknown pipe function based on the specified name.
+            </summary>
+            <param name="name">The name of pipe function.</param>
+            <param name="next">A delegate that when called the next resolver delegate is returned.</param>
+            <returns>Resolved pipe function based on the specified name.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.GetNextPipeFunctionResolverDelegate">
+            <summary>
+            Encapsulates a method that when called the next resolver delegate is returned.
+            </summary>
+            <returns>A delegate encapsulating a method that resolves unknown pipe function based on the specified name.</returns>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.Waterpipe">
+            <summary>
+            Provides methods to use with waterpipe template.
+            </summary>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.Evaluate(System.String,System.Object)">
+            <summary>
+            Evaluates the template against the specified value.
+            </summary>
+            <param name="template">A string that represents a valid waterpipe template.</param>
+            <param name="value">An object defining the root context.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.Evaluate(System.String,System.Object,Codeless.WaterpipeSharp.EvaluateOptions)">
+            <summary>
+            Evaluates the template against the specified value and options.
+            </summary>
+            <param name="template">A string that represents a valid waterpipe template.</param>
+            <param name="value">An object defining the root context.</param>
+            <param name="options">Options that alter rendering behaviors.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.Evaluate(System.String,System.Object,Codeless.WaterpipeSharp.EvaluateOptions,Codeless.WaterpipeSharp.PipeExecutionException[]@)">
+            <summary>
+            Evaluates the template against the specified value and options.
+            </summary>
+            <param name="template">A string that represents a valid waterpipe template.</param>
+            <param name="value">An object defining the root context.</param>
+            <param name="options">Options that alter rendering behaviors.</param>
+            <param name="exceptions"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunctionResolver(Codeless.WaterpipeSharp.PipeFunctionResolver)">
+            <summary>
+            Registers a pipe function resolvers that handles unknown pipe functions.
+            </summary>
+            <param name="resolver"></param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunction(System.String,System.String)">
+            <summary>
+            Registers a pipe function that run the specified template with the specified name.
+            </summary>
+            <param name="name">A string specifying the name of the pipe function.</param>
+            <param name="template">A string that represents a valid waterpipe template.</param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunction(System.String,Codeless.WaterpipeSharp.PipeFunction.Variadic)">
+            <summary>
+            Registers a pipe function that takes arbitrary number of arguments or function arguments from pipe with the specified name.
+            </summary>
+            <param name="name">A string specifying the name of the pipe function.</param>
+            <param name="fn">A delegate encapsulating the native method.</param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunction(System.String,Codeless.WaterpipeSharp.PipeFunction.Func0)">
+            <summary>
+            Registers a pipe function that takes no arguments from pipe with the specified name.
+            </summary>
+            <param name="name">A string specifying the name of the pipe function.</param>
+            <param name="fn">A delegate encapsulating the native method.</param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunction(System.String,Codeless.WaterpipeSharp.PipeFunction.Func1)">
+            <summary>
+            Registers a pipe function that takes one arguments from pipe with the specified name.
+            </summary>
+            <param name="name">A string specifying the name of the pipe function.</param>
+            <param name="fn">A delegate encapsulating the native method.</param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunction(System.String,Codeless.WaterpipeSharp.PipeFunction.Func2)">
+            <summary>
+            Registers a pipe function that takes two arguments from pipe with the specified name.
+            </summary>
+            <param name="name">A string specifying the name of the pipe function.</param>
+            <param name="fn">A delegate encapsulating the native method.</param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunction(System.String,Codeless.WaterpipeSharp.PipeFunction.Func3)">
+            <summary>
+            Registers a pipe function that takes three arguments from pipe with the specified name.
+            </summary>
+            <param name="name">A string specifying the name of the pipe function.</param>
+            <param name="fn">A delegate encapsulating the native method.</param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunction(System.String,Codeless.WaterpipeSharp.PipeFunction.Func4)">
+            <summary>
+            Registers a pipe function that takes four arguments from pipe with the specified name.
+            </summary>
+            <param name="name">A string specifying the name of the pipe function.</param>
+            <param name="fn">A delegate encapsulating the native method.</param>
+        </member>
+        <member name="M:Codeless.WaterpipeSharp.Waterpipe.RegisterFunction(System.String,Codeless.WaterpipeSharp.PipeFunction.Func5)">
+            <summary>
+            Registers a pipe function that takes five arguments from pipe with the specified name.
+            </summary>
+            <param name="name">A string specifying the name of the pipe function.</param>
+            <param name="fn">A delegate encapsulating the native method.</param>
+        </member>
+        <member name="T:Codeless.WaterpipeSharp.WaterpipeException">
+            <summary>
+            Represents errors that occur during evaluation of the template.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -547,8 +547,13 @@ namespace Codeless.WaterpipeSharp.Internal {
     [BuiltInPipeFunctionAlias(":date", UseAliasOnly = true)]
     public static EcmaValue FormatDate(EcmaValue timestamp, EcmaValue format) {
       DateTime d;
-      if (timestamp.Type == EcmaValueType.String) {
-        DateTime.TryParse(timestamp.ToString(), out d);
+      if (!(bool)format) {
+        return "";
+      }
+      if (timestamp.GetUnderlyingObject() is EcmaDate date) {
+        d = date.Value;
+      } else if (timestamp.Type == EcmaValueType.String) {
+        d = new EcmaDate(timestamp.ToString(true)).Value;
       } else {
         d = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(timestamp.ToDouble());
       }

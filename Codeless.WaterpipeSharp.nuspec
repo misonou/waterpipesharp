@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>Codeless.WaterpipeSharp</id>
-        <version>2.2.0</version>
+        <version>2.3.0</version>
         <authors>misonou</authors>
         <projectUrl>https://github.com/misonou/waterpipesharp</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -10,15 +10,21 @@
         <copyright>MIT</copyright>
         <language>en-US</language>
         <dependencies>
-            <dependency id="Codeless.Ecma" version="0.1.0" />
+            <dependency id="Codeless.Ecma" version="0.1.1" />
         </dependencies>
     </metadata>
     <files>
         <file src="lib\net45\Codeless.WaterpipeSharp.dll" target="lib\net45\Codeless.WaterpipeSharp.dll" />
+        <file src="lib\net45\Codeless.WaterpipeSharp.xml" target="lib\net45\Codeless.WaterpipeSharp.pdb" />
         <file src="lib\net45\Codeless.WaterpipeSharp.xml" target="lib\net45\Codeless.WaterpipeSharp.xml" />
         <file src="lib\net40\Codeless.WaterpipeSharp.dll" target="lib\net40\Codeless.WaterpipeSharp.dll" />
+        <file src="lib\net40\Codeless.WaterpipeSharp.dll" target="lib\net40\Codeless.WaterpipeSharp.pdb" />
         <file src="lib\net40\Codeless.WaterpipeSharp.xml" target="lib\net40\Codeless.WaterpipeSharp.xml" />
         <file src="lib\net35\Codeless.WaterpipeSharp.dll" target="lib\net35\Codeless.WaterpipeSharp.dll" />
+        <file src="lib\net35\Codeless.WaterpipeSharp.dll" target="lib\net35\Codeless.WaterpipeSharp.pdb" />
         <file src="lib\net35\Codeless.WaterpipeSharp.xml" target="lib\net35\Codeless.WaterpipeSharp.xml" />
+        <file src="lib\netstandard2.0\Codeless.WaterpipeSharp.dll" target="lib\netstandard2.0\Codeless.WaterpipeSharp.dll" />
+        <file src="lib\netstandard2.0\Codeless.WaterpipeSharp.dll" target="lib\netstandard2.0\Codeless.WaterpipeSharp.pdb" />
+        <file src="lib\netstandard2.0\Codeless.WaterpipeSharp.xml" target="lib\netstandard2.0\Codeless.WaterpipeSharp.xml" />
     </files>
 </package>

@@ -16,8 +16,24 @@ namespace Codeless.WaterpipeSharp.Internal {
       try {
         return Ecma.Json.Stringify(value);
       } catch {
-        return String(value);
+        return (string)value;
       }
+    }
+
+    public static string Repeat(string str, int count) {
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < count; i++) {
+        sb.Append(str);
+      }
+      return sb.ToString();
+    }
+
+    public static string Indent(string str, int level, string start = null) {
+      return start + Repeat(str, level);
+    }
+
+    public static string Indent(int str, int level, string start = null) {
+      return start + Repeat(Repeat(" ", str), level);
     }
 
     public static string String(EcmaValue value, Func<EcmaValue, string> stringify = null) {

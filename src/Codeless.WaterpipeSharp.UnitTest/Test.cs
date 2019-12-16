@@ -20,6 +20,7 @@ namespace Codeless.WaterpipeSharp.UnitTest {
       foreach (DictionaryEntry e in (IDictionary)spec["globals"]) {
         globals[(string)e.Key] = new EcmaValue(e.Value);
       }
+      globals["circular"] = new EcmaValue(globals);
       foreach (DictionaryEntry e in (IDictionary)spec["pipes"]) {
         Waterpipe.RegisterFunction((string)e.Key, (string)e.Value);
       }
@@ -32,7 +33,7 @@ namespace Codeless.WaterpipeSharp.UnitTest {
       foreach (DictionaryEntry e in (IDictionary)spec["tests"]) {
         foreach (DictionaryEntry f in (IDictionary)e.Value) {
           IDictionary obj = (IDictionary)f.Value;
-          TestCaseData test = new TestCaseData(obj["input"], obj["template"] ?? "", obj["expect"], obj["globals"], obj["exception"], obj["func"]);
+          TestCaseData test = new TestCaseData(obj["input"], obj["template"] ?? "", obj["expect"], obj["globals"], obj["exception"], obj["func"], obj["options"]);
           test.SetName("<" + (string)e.Key + ": " + (string)f.Key + ">");
           tests.Add(test);
         }
@@ -40,12 +41,28 @@ namespace Codeless.WaterpipeSharp.UnitTest {
     }
 
     [Test, TestCaseSource("tests")]
-    public void Run(object input, string template, object expected, IDictionary myGlobals, bool? exception, string func) {
+    public void Run(object input, string template, object expected, IDictionary myGlobals, bool? exception, string func, IDictionary customOptions) {
       EvaluateOptions options = new EvaluateOptions();
       if (myGlobals != null) {
         options.Globals = new PipeGlobal(myGlobals);
       } else {
         options.Globals = globals;
+      }
+      if (customOptions != null) {
+        if (customOptions["indent"] != null) {
+          if (customOptions["indent"] is int num) {
+            options.Indent = num;
+          } else {
+            options.IndentString = customOptions["indent"].ToString();
+          }
+        }
+        if (customOptions["indentPadding"] != null) {
+          if (customOptions["indentPadding"] is int num) {
+            options.IndentPadding = num;
+          } else {
+            options.IndentPaddingString = customOptions["indentPadding"].ToString();
+          }
+        }
       }
       Func<string, object, EvaluateOptions, object> execute = func == "eval" ?
         (Func<string, object, EvaluateOptions, object>)Waterpipe.EvaluateSingle :

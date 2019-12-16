@@ -17,6 +17,9 @@ namespace Codeless.WaterpipeSharp.Internal {
 
   internal abstract class Token {
     public abstract TokenType Type { get; }
+    public bool TrimStart { get; set; }
+    public bool TrimEnd { get; set; }
+    public int? Indent { get; set; }
   }
 
   internal abstract class ControlToken : Token {
@@ -88,28 +91,22 @@ namespace Codeless.WaterpipeSharp.Internal {
   }
 
   internal abstract class OutputTokenBase : Token {
-    public abstract string Value { get; set; }
+    public string Value { get; set; }
   }
 
   [DebuggerDisplay("@space")]
   internal class SpaceToken : OutputTokenBase {
     public override TokenType Type => TokenType.OP_SPACE;
-    public override string Value {
-      get { return " "; }
-      set { }
-    }
   }
 
   [DebuggerDisplay("@out '{Value}'")]
   internal class OutputToken : OutputTokenBase {
     public override TokenType Type => TokenType.OP_TEXT;
     public int Index { get; set; }
-    public override string Value { get; set; }
-    public bool TrimStart { get; set; }
-    public bool TrimEnd { get; set; }
     public string TagName { get; set; }
     public bool? TagOpened { get; set; }
     public string AttributeName { get; set; }
     public bool MuteTagEnd { get; set; }
+    public string Text { get; set; }
   }
 }

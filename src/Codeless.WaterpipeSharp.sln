@@ -9,35 +9,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codeless.WaterpipeSharp", "
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug-Net35|Any CPU = Debug-Net35|Any CPU
-		Debug-Net40|Any CPU = Debug-Net40|Any CPU
-		Debug-Net45|Any CPU = Debug-Net45|Any CPU
-		Release-Net35|Any CPU = Release-Net35|Any CPU
-		Release-Net40|Any CPU = Release-Net40|Any CPU
-		Release-Net45|Any CPU = Release-Net45|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Debug-Net35|Any CPU.ActiveCfg = Debug-Net35|Any CPU
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Debug-Net35|Any CPU.Build.0 = Debug-Net35|Any CPU
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Debug-Net40|Any CPU.ActiveCfg = Debug-Net40|Any CPU
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Debug-Net40|Any CPU.Build.0 = Debug-Net40|Any CPU
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Debug-Net45|Any CPU.ActiveCfg = Debug-Net45|Any CPU
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Debug-Net45|Any CPU.Build.0 = Debug-Net45|Any CPU
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Release-Net35|Any CPU.ActiveCfg = Debug-Net35|Any CPU
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Release-Net40|Any CPU.ActiveCfg = Debug-Net40|Any CPU
-		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Release-Net45|Any CPU.ActiveCfg = Debug-Net45|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Debug-Net35|Any CPU.ActiveCfg = Debug-Net35|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Debug-Net35|Any CPU.Build.0 = Debug-Net35|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Debug-Net40|Any CPU.ActiveCfg = Debug-Net40|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Debug-Net40|Any CPU.Build.0 = Debug-Net40|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Debug-Net45|Any CPU.ActiveCfg = Debug-Net45|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Debug-Net45|Any CPU.Build.0 = Debug-Net45|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Release-Net35|Any CPU.ActiveCfg = Release-Net35|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Release-Net35|Any CPU.Build.0 = Release-Net35|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Release-Net40|Any CPU.ActiveCfg = Release-Net40|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Release-Net40|Any CPU.Build.0 = Release-Net40|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Release-Net45|Any CPU.ActiveCfg = Release-Net45|Any CPU
-		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Release-Net45|Any CPU.Build.0 = Release-Net45|Any CPU
+		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{48394924-7FBE-4F9A-B8F9-9BE76333CA85}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27084E4C-9AD8-446C-80E2-CD4221C112D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

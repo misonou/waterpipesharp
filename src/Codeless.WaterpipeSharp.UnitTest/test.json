@@ -1,4 +1,4 @@
-﻿{
+{
     "globals": {
         "myGlobal": "global",
         "specialChars": "<>",
@@ -38,7 +38,8 @@
         "myTemplateTestOut": "value={{@root}}",
         "myTemplateTestStack": "{{@1}}",
         "myTemplateTestGlobal": "{{customGlobal}}",
-        "myTemplateTestGlobalOverwrite": "{{let customGlobal false}}"
+        "myTemplateTestGlobalOverwrite": "{{let customGlobal false}}",
+        "myTemplateHTML": "<a>\r\n<b>myTemplateHTML</b>\r\n</a>"
     },
     "tests": {
         "Object path": {
@@ -194,6 +195,10 @@
                 },
                 "template": "{{.}}",
                 "expect": "{&quot;prop&quot;:1}"
+            },
+            "should output primitive String conversion with cyclic object": {
+                "template": "{{circular}}",
+                "expect": "[object Object]"
             },
             "should output empty string with undefined": {
                 "template": "{{.}}",
@@ -651,6 +656,10 @@
             "not": {
                 "template": "{{false not}}:{{not true}}",
                 "expect": "true:false"
+            },
+            "??": {
+                "template": "{{false ?? 1}}:{{null ?? 1}}:{{undefined ?? 1}}",
+                "expect": "false:1:1"
             }
         },
         "String functions": {
@@ -793,204 +802,201 @@
                 "expect": "100:1"
             }
         },
-      "Iterable functions": {
-        "to": {
-          "template": "{{0 .. 3}}",
-          "expect": "[0,1,2,3]"
-        },
-        "to reversed": {
-          "template": "{{3 .. 0}}",
-          "expect": "[3,2,1,0]"
-        },
-        "join": {
-          "template": "{{arrOfFib join ,}}",
-          "expect": "1,1,2,3,5,8"
-        },
-        "keys": {
-          "template": "{{arrOfFib keys}}",
-          "expect": "[0,1,2,3,4,5]"
-        },
-        "keys of object": {
-          "template": "{{numbers keys}}",
-          "expect": "[&quot;one&quot;,&quot;two&quot;,&quot;three&quot;,&quot;four&quot;,&quot;five&quot;]"
-        },
-        "map": {
-          "template": "{{arrOfFib map [ % 2 ]}}",
-          "expect": "[1,1,0,1,1,0]"
-        },
-        "where fn": {
-          "template": "{{arrOfFib where [ even ]}}:{{arrOfOdd where [ even ]}}:{{arrOfEven where [ even ]}}",
-          "expect": "[2,8]:[]:[2,4,6,8,10,12]"
-        },
-        "where of object": {
-          "template": "{{numbers where [ even ]}}",
-          "expect": "{&quot;two&quot;:2,&quot;four&quot;:4}"
-        },
-        "where key": {
-          "input": {
-            "key": "even",
-            "arrOfNull": [ null, null, null ]
-          },
-          "template": "{{arrOfFibObj where even}}:{{arrOfFibObj where key}}:{{arrOfFibObj where $even}}:{{arrOfFibObj where \"key\"}}:{{arrOfNull where key}}:{{arrOfFibObj where}}",
-          "expect": "[{&quot;value&quot;:2,&quot;even&quot;:true},{&quot;value&quot;:8,&quot;even&quot;:true}]:[{&quot;value&quot;:2,&quot;even&quot;:true},{&quot;value&quot;:8,&quot;even&quot;:true}]:[]:[]:[]:[]"
-        },
-        "where pipe": {
-          "template": "{{arrOfFib where even}}:{{arrOfFib where myTemplateEven}}",
-          "expect": "[2,8]:[2,8]"
-        },
-        "where <nothing> is identical to where \"\"": {
-          "input": [
-            {
-              "": true
+        "Iterable functions": {
+            "to": {
+                "template": "{{0 .. 3}}",
+                "expect": "[0,1,2,3]"
             },
-            {
-              "": false
+            "to reversed": {
+                "template": "{{3 .. 0}}",
+                "expect": "[3,2,1,0]"
+            },
+            "join": {
+                "template": "{{arrOfFib join ,}}",
+                "expect": "1,1,2,3,5,8"
+            },
+            "keys": {
+                "template": "{{arrOfFib keys}}",
+                "expect": "[0,1,2,3,4,5]"
+            },
+            "keys of object": {
+                "template": "{{numbers keys}}",
+                "expect": "[&quot;one&quot;,&quot;two&quot;,&quot;three&quot;,&quot;four&quot;,&quot;five&quot;]"
+            },
+            "map": {
+                "template": "{{arrOfFib map [ % 2 ]}}",
+                "expect": "[1,1,0,1,1,0]"
+            },
+            "where fn": {
+                "template": "{{arrOfFib where [ even ]}}:{{arrOfOdd where [ even ]}}:{{arrOfEven where [ even ]}}",
+                "expect": "[2,8]:[]:[2,4,6,8,10,12]"
+            },
+            "where of object": {
+                "template": "{{numbers where [ even ]}}",
+                "expect": "{&quot;two&quot;:2,&quot;four&quot;:4}"
+            },
+            "where key": {
+                "input": {
+                    "key": "even",
+                    "arrOfNull": [null, null, null]
+                },
+                "template": "{{arrOfFibObj where even}}:{{arrOfFibObj where key}}:{{arrOfFibObj where $even}}:{{arrOfFibObj where \"key\"}}:{{arrOfNull where key}}:{{arrOfFibObj where}}",
+                "expect": "[{&quot;value&quot;:2,&quot;even&quot;:true},{&quot;value&quot;:8,&quot;even&quot;:true}]:[{&quot;value&quot;:2,&quot;even&quot;:true},{&quot;value&quot;:8,&quot;even&quot;:true}]:[]:[]:[]:[]"
+            },
+            "where pipe": {
+                "template": "{{arrOfFib where even}}:{{arrOfFib where myTemplateEven}}",
+                "expect": "[2,8]:[2,8]"
+            },
+            "where <nothing> is identical to where \"\"": {
+                "input": [{
+                    "": true
+                }, {
+                    "": false
+                }],
+                "template": "{{where}}",
+                "expect": "[{&quot;&quot;:true}]"
+            },
+            "first fn": {
+                "template": "{{arrOfFib first [ even ]}}:{{arrOfOdd first [ even ]}}:{{arrOfEven first [ even ]}}",
+                "expect": "2::2"
+            },
+            "first key": {
+                "template": "{{arrOfFibObj first even}}",
+                "expect": "{&quot;value&quot;:2,&quot;even&quot;:true}"
+            },
+            "first pipe": {
+                "template": "{{arrOfFib first even}}:{{arrOfOdd first even}}:{{arrOfEven first even}}",
+                "expect": "2::2"
+            },
+            "first of object": {
+                "template": "{{numbers first [ even ]}}",
+                "expect": "2"
+            },
+            "any fn": {
+                "template": "{{arrOfFib any [ even ]}}:{{arrOfOdd any [ even ]}}:{{arrOfEven any [ even ]}}",
+                "expect": "true:false:true"
+            },
+            "any key": {
+                "template": "{{arrOfFibObj any even}}",
+                "expect": "true"
+            },
+            "any pipe": {
+                "template": "{{arrOfFib any even}}:{{arrOfOdd any even}}:{{arrOfEven any even}}",
+                "expect": "true:false:true"
+            },
+            "any of object": {
+                "template": "{{numbers any [ even ]}}",
+                "expect": "true"
+            },
+            "all fn": {
+                "template": "{{arrOfFib all [ even ]}}:{{arrOfOdd all [ even ]}}:{{arrOfEven all [ even ]}}",
+                "expect": "false:false:true"
+            },
+            "all key": {
+                "template": "{{arrOfFibObj all even}}",
+                "expect": "false"
+            },
+            "all pipe": {
+                "template": "{{arrOfFib all even}}:{{arrOfOdd all even}}:{{arrOfEven all even}}",
+                "expect": "false:false:true"
+            },
+            "all of object": {
+                "template": "{{numbers all [ even ]}}",
+                "expect": "false"
+            },
+            "none fn": {
+                "template": "{{arrOfFib none [ even ]}}:{{arrOfOdd none [ even ]}}:{{arrOfEven none [ even ]}}",
+                "expect": "false:true:false"
+            },
+            "none key": {
+                "template": "{{arrOfFibObj none even}}",
+                "expect": "false"
+            },
+            "none pipe": {
+                "template": "{{arrOfFib none even}}:{{arrOfOdd none even}}:{{arrOfEven none even}}",
+                "expect": "false:true:false"
+            },
+            "none of object": {
+                "template": "{{numbers none [ even ]}}",
+                "expect": "false"
+            },
+            "sum": {
+                "template": "{{arrOfFib sum}}",
+                "expect": "20"
+            },
+            "sum seed": {
+                "template": "{{arrOfFib sum 1}}",
+                "expect": "21"
+            },
+            "sum fn": {
+                "template": "{{arrOfFib sum [ * 10 ]}}",
+                "expect": "200"
+            },
+            "sum seed fn": {
+                "template": "{{arrOfFib sum 1 [ * 10 ]}}",
+                "expect": "201"
+            },
+            "sum seed key": {
+                "template": "{{arrOfFibObj sum 1 value}}",
+                "expect": "21"
+            },
+            "slice": {
+                "template": "{{arrOfFib slice 0 2}}",
+                "expect": "[1,1]"
+            },
+            "unique": {
+                "template": "{{arrOfFib unique}}",
+                "expect": "[1,2,3,5,8]"
+            },
+            "sort": {
+                "template": "{{arrOfFib sort}}",
+                "expect": "[1,1,2,3,5,8]"
+            },
+            "sortby fn": {
+                "template": "{{arrOfFib sortby [ even ]}}",
+                "expect": "[1,1,3,5,2,8]"
+            },
+            "sortby key": {
+                "template": "{{arrOfFibObj sortby even}}",
+                "expect": "[{&quot;value&quot;:1,&quot;even&quot;:false},{&quot;value&quot;:1,&quot;even&quot;:false},{&quot;value&quot;:3,&quot;even&quot;:false},{&quot;value&quot;:5,&quot;even&quot;:false},{&quot;value&quot;:2,&quot;even&quot;:true},{&quot;value&quot;:8,&quot;even&quot;:true}]"
+            },
+            "sortby of object": {
+                "template": "{{numbers sortby [ even ]}}",
+                "expect": "{&quot;one&quot;:1,&quot;three&quot;:3,&quot;five&quot;:5,&quot;two&quot;:2,&quot;four&quot;:4}"
+            },
+            "groupby fn": {
+                "template": "{{arrOfFib groupby [ even ]}}",
+                "expect": "{&quot;false&quot;:[1,1,3,5],&quot;true&quot;:[2,8]}"
+            },
+            "groupby key": {
+                "template": "{{arrOfFibObj groupby even}}",
+                "expect": "{&quot;false&quot;:[{&quot;value&quot;:1,&quot;even&quot;:false},{&quot;value&quot;:1,&quot;even&quot;:false},{&quot;value&quot;:3,&quot;even&quot;:false},{&quot;value&quot;:5,&quot;even&quot;:false}],&quot;true&quot;:[{&quot;value&quot;:2,&quot;even&quot;:true},{&quot;value&quot;:8,&quot;even&quot;:true}]}"
+            },
+            "groupby of object": {
+                "template": "{{numbers groupby [ even ]}}",
+                "expect": "{&quot;false&quot;:{&quot;one&quot;:1,&quot;three&quot;:3,&quot;five&quot;:5},&quot;true&quot;:{&quot;two&quot;:2,&quot;four&quot;:4}}"
+            },
+            "reverse": {
+                "template": "{{arrOfFib reverse}}",
+                "expect": "[8,5,3,2,1,1]"
+            },
+            "in array": {
+                "template": "{{\"1\" in arrOfFib}}:{{\"0\" in arrOfFib}}",
+                "expect": "true:false"
+            },
+            "in object": {
+                "template": "{{\"one\" in numbers}}:{{\"zero\" in numbers}}",
+                "expect": "true:false"
+            },
+            "length": {
+                "template": "{{length}}:{{\"foo\" length}}:{{arrOfFib length}}",
+                "expect": "0:3:6"
             }
-          ],
-          "template": "{{where}}",
-          "expect": "[{&quot;&quot;:true}]"
         },
-        "first fn": {
-          "template": "{{arrOfFib first [ even ]}}:{{arrOfOdd first [ even ]}}:{{arrOfEven first [ even ]}}",
-          "expect": "2::2"
-        },
-        "first key": {
-          "template": "{{arrOfFibObj first even}}",
-          "expect": "{&quot;value&quot;:2,&quot;even&quot;:true}"
-        },
-        "first pipe": {
-          "template": "{{arrOfFib first even}}:{{arrOfOdd first even}}:{{arrOfEven first even}}",
-          "expect": "2::2"
-        },
-        "first of object": {
-          "template": "{{numbers first [ even ]}}",
-          "expect": "2"
-        },
-        "any fn": {
-          "template": "{{arrOfFib any [ even ]}}:{{arrOfOdd any [ even ]}}:{{arrOfEven any [ even ]}}",
-          "expect": "true:false:true"
-        },
-        "any key": {
-          "template": "{{arrOfFibObj any even}}",
-          "expect": "true"
-        },
-        "any pipe": {
-          "template": "{{arrOfFib any even}}:{{arrOfOdd any even}}:{{arrOfEven any even}}",
-          "expect": "true:false:true"
-        },
-        "any of object": {
-          "template": "{{numbers any [ even ]}}",
-          "expect": "true"
-        },
-        "all fn": {
-          "template": "{{arrOfFib all [ even ]}}:{{arrOfOdd all [ even ]}}:{{arrOfEven all [ even ]}}",
-          "expect": "false:false:true"
-        },
-        "all key": {
-          "template": "{{arrOfFibObj all even}}",
-          "expect": "false"
-        },
-        "all pipe": {
-          "template": "{{arrOfFib all even}}:{{arrOfOdd all even}}:{{arrOfEven all even}}",
-          "expect": "false:false:true"
-        },
-        "all of object": {
-          "template": "{{numbers all [ even ]}}",
-          "expect": "false"
-        },
-        "none fn": {
-          "template": "{{arrOfFib none [ even ]}}:{{arrOfOdd none [ even ]}}:{{arrOfEven none [ even ]}}",
-          "expect": "false:true:false"
-        },
-        "none key": {
-          "template": "{{arrOfFibObj none even}}",
-          "expect": "false"
-        },
-        "none pipe": {
-          "template": "{{arrOfFib none even}}:{{arrOfOdd none even}}:{{arrOfEven none even}}",
-          "expect": "false:true:false"
-        },
-        "none of object": {
-          "template": "{{numbers none [ even ]}}",
-          "expect": "false"
-        },
-        "sum": {
-          "template": "{{arrOfFib sum}}",
-          "expect": "20"
-        },
-        "sum seed": {
-          "template": "{{arrOfFib sum 1}}",
-          "expect": "21"
-        },
-        "sum fn": {
-          "template": "{{arrOfFib sum [ * 10 ]}}",
-          "expect": "200"
-        },
-        "sum seed fn": {
-          "template": "{{arrOfFib sum 1 [ * 10 ]}}",
-          "expect": "201"
-        },
-        "sum seed key": {
-          "template": "{{arrOfFibObj sum 1 value}}",
-          "expect": "21"
-        },
-        "slice": {
-          "template": "{{arrOfFib slice 0 2}}",
-          "expect": "[1,1]"
-        },
-        "unique": {
-          "template": "{{arrOfFib unique}}",
-          "expect": "[1,2,3,5,8]"
-        },
-        "sort": {
-          "template": "{{arrOfFib sort}}",
-          "expect": "[1,1,2,3,5,8]"
-        },
-        "sortby fn": {
-          "template": "{{arrOfFib sortby [ even ]}}",
-          "expect": "[1,1,3,5,2,8]"
-        },
-        "sortby key": {
-          "template": "{{arrOfFibObj sortby even}}",
-          "expect": "[{&quot;value&quot;:1,&quot;even&quot;:false},{&quot;value&quot;:1,&quot;even&quot;:false},{&quot;value&quot;:3,&quot;even&quot;:false},{&quot;value&quot;:5,&quot;even&quot;:false},{&quot;value&quot;:2,&quot;even&quot;:true},{&quot;value&quot;:8,&quot;even&quot;:true}]"
-        },
-        "sortby of object": {
-          "template": "{{numbers sortby [ even ]}}",
-          "expect": "{&quot;one&quot;:1,&quot;three&quot;:3,&quot;five&quot;:5,&quot;two&quot;:2,&quot;four&quot;:4}"
-        },
-        "groupby fn": {
-          "template": "{{arrOfFib groupby [ even ]}}",
-          "expect": "{&quot;false&quot;:[1,1,3,5],&quot;true&quot;:[2,8]}"
-        },
-        "groupby key": {
-          "template": "{{arrOfFibObj groupby even}}",
-          "expect": "{&quot;false&quot;:[{&quot;value&quot;:1,&quot;even&quot;:false},{&quot;value&quot;:1,&quot;even&quot;:false},{&quot;value&quot;:3,&quot;even&quot;:false},{&quot;value&quot;:5,&quot;even&quot;:false}],&quot;true&quot;:[{&quot;value&quot;:2,&quot;even&quot;:true},{&quot;value&quot;:8,&quot;even&quot;:true}]}"
-        },
-        "groupby of object": {
-          "template": "{{numbers groupby [ even ]}}",
-          "expect": "{&quot;false&quot;:{&quot;one&quot;:1,&quot;three&quot;:3,&quot;five&quot;:5},&quot;true&quot;:{&quot;two&quot;:2,&quot;four&quot;:4}}"
-        },
-        "reverse": {
-          "template": "{{arrOfFib reverse}}",
-          "expect": "[8,5,3,2,1,1]"
-        },
-        "in array": {
-          "template": "{{\"1\" in arrOfFib}}:{{\"0\" in arrOfFib}}",
-          "expect": "true:false"
-        },
-        "in object": {
-          "template": "{{\"one\" in numbers}}:{{\"zero\" in numbers}}",
-          "expect": "true:false"
-        },
-        "length": {
-          "template": "{{length}}:{{\"foo\" length}}:{{arrOfFib length}}",
-          "expect": "0:3:6"
-        }
-      },
         "Formatting functions": {
             ":printf": {
-                "template": "{{3.14 :printf %d}}",
-                "expect": "3"
+                "template": "{{3.14 :printf %d}}:{{3.14 %d}}",
+                "expect": "3:3"
             },
             ":query": {
                 "input": {
@@ -1001,8 +1007,8 @@
                 "expect": "p1=value1&p2=value2"
             },
             ":date": {
-                "template": "{{0 :date \"yyyy/MM/dd HH:mm:ss.ffffffzzz hhtt g yy MMM MMMM ddd dddd\"}}",
-                "expect": "1970/01/01 08:00:00.000000+08:00 08AM A.D. 70 Jan January Thu Thursday"
+                "template": "{{0 :date \"yyyy/MM/dd HH:mm:ss.ffffffzzz hhtt g yy MMM MMMM ddd dddd K z zz F\"}}::{{\"2019-11-01 12:00:00\" :date \"yyyy/MM/dd hh:mm:ss\"}}::{{0 :date}}",
+                "expect": "1970/01/01 08:00:00.000000+08:00 08AM A.D. 70 Jan January Thu Thursday +08:00 +8 +08 ::2019/11/01 12:00:00::"
             }
         },
         "waterpipe()": {
@@ -1049,6 +1055,18 @@
                 "template": "<div><\">\"</div>",
                 "expect": "<div>&lt;&quot;&gt;&quot;</div>"
             },
+            "should not encode <!doctype>": {
+                "template": "<!doctype html><html></html>",
+                "expect": "<!doctype html><html></html>"
+            },
+            "should not encode in <script>": {
+                "template": "<script>if (1<a) a = \"</script>\"",
+                "expect": "<script>if (1<a) a = \"</script>&quot;"
+            },
+            "should not encode in <style>": {
+                "template": "<style>if (1<a) a = \"</style>\"",
+                "expect": "<style>if (1<a) a = \"</style>&quot;"
+            },
             "should preserve entities in text content": {
                 "template": "<div>&lt;</div>",
                 "expect": "<div>&lt;</div>"
@@ -1075,6 +1093,16 @@
                 "template": "{{.}}  {{.}}",
                 "expect": "foo foo"
             },
+            "should preserve all whitespace in <script>": {
+                "template": "<script>if (1<a) {}\r\n        \r\n\r\n\r\n\t\t\tconsole.log('     ')</script>",
+                "expect": "<script>if (1<a) {}\r\n        \r\n\r\n\r\n\t\t\tconsole.log('     ')</script>",
+                "options": { "indent": 2 }
+            },
+            "should preserve all whitespace in <style>": {
+                "template": "<style>if (1<a) {}\r\n        \r\n\r\n\r\n\t\t\tconsole.log('     ')</style>",
+                "expect": "<style>if (1<a) {}\r\n        \r\n\r\n\r\n\t\t\tconsole.log('     ')</style>",
+                "options": { "indent": 2 }
+            },
             "should throw error on mismatched template statement": {
                 "template": "{{foreach}}{{/if}}",
                 "exception": true
@@ -1083,6 +1111,51 @@
                 "template": "{{myGlobal noThisPipe}}",
                 "expect": "",
                 "warn": true
+            },
+            "should indent descendant elements by number of spaces if indent options is present": {
+                "template": "<div>\r\n<div>This is sample text</div>\r\n</div>",
+                "options": { "indent": 2 },
+                "expect": "<div>\r\n  <div>This is sample text</div>\r\n</div>"
+            },
+            "should indent descendant elements by given string if indent options is present": {
+                "template": "<div>\r\n<div>This is sample text</div>\r\n</div>",
+                "options": { "indent": "\t" },
+                "expect": "<div>\r\n\t<div>This is sample text</div>\r\n</div>"
+            },
+            "should ignore extra new lines and whitespaces": {
+                "template": "<div>\r\n \r\n<div>This is sample text</div>\r\n\r\n</div>",
+                "options": { "indent": 2 },
+                "expect": "<div>\r\n  <div>This is sample text</div>\r\n</div>"
+            },
+            "should ignore extra new lines around foreach loop": {
+                "template": "<div>\r\n \r\n{{foreach arrOfFib}}\r\n\r\n<div>{{.}}</div>\r\n\r\n{{/foreach}}\r\n\r\n</div>",
+                "options": { "indent": 2 },
+                "expect": "<div>\r\n  <div>1</div>\r\n  <div>1</div>\r\n  <div>2</div>\r\n  <div>3</div>\r\n  <div>5</div>\r\n  <div>8</div>\r\n</div>"
+            },
+            "should prepend number of spaces to every line of indentPadding options is present": {
+                "template": "<div>\r\n<div>This is sample text</div>\r\n</div>",
+                "options": { "indent": 2, "indentPadding": 2 },
+                "expect": "  <div>\r\n    <div>This is sample text</div>\r\n  </div>"
+            },
+            "should prepend given string to every line of indentPadding options is present": {
+                "template": "<div>\r\n<div>This is sample text</div>\r\n</div>",
+                "options": { "indent": 2, "indentPadding": "\t" },
+                "expect": "\t<div>\r\n\t  <div>This is sample text</div>\r\n\t</div>"
+            },
+            "should only acknowledge indentPadding option if indent option is present": {
+                "template": "<div></div>",
+                "options": { "indentPadding": 2 },
+                "expect": "<div></div>"
+            },
+            "should override formatting in input template": {
+                "template": "<a>\r\n       <b>1</b>\r\n</a>",
+                "options": { "indent": 2 },
+                "expect": "<a>\r\n  <b>1</b>\r\n</a>"
+            },
+            "should indent correctly with template inclusion": {
+                "template": "<div>\r\n{{myTemplateHTML}}\r\n</div>",
+                "options": { "indent": 2 },
+                "expect": "<div>\r\n  <a>\r\n    <b>myTemplateHTML</b>\r\n  </a>\r\n</div>"
             }
         },
         "waterpipe.eval()": {
